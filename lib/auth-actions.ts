@@ -335,3 +335,60 @@ export async function createProject(formData: FormData) {
     throw error;
   }
 }
+
+export async function applyToProject(projectId: number) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    console.log("Applying to project:", { projectId, userId: user.id });
+
+    // Check if user already applied
+    const { data: existingApplication } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("project_id", projectId)
+      .single();
+
+    if (existingApplication) {
+      throw new Error("You have already applied to this project");
+    }
+
+    // Insert application into database
+    const { data, error: insertError } = await supabase
+      .from("applications")
+      .insert({
+        user_id: user.id,
+        project_id: projectId,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting application:", insertError);
+      throw new Error(`Failed to apply: ${insertError.message}`);
+    }
+
+    console.log("Application submitted successfully:", data);
+
+    revalidatePath("/freelancer/projects");
+    revalidatePath(`/freelancer/projects/${projectId}`);
+    revalidatePath("/freelancer/applications");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Apply to project error:", error);
+    throw error;
+  }
+}
