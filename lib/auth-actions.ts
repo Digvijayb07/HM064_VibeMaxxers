@@ -105,6 +105,76 @@ export async function signout() {
   redirect("/signin");
 }
 
+export async function updateUserRole(userRole: "company" | "developer") {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    console.log("Updating role for user:", user.id, "to:", userRole);
+
+    // Check if user already exists in users table
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (existingUser) {
+      // Update existing user
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({ role: userRole })
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        console.error("Error updating user role:", updateError);
+        throw new Error("Failed to update user role");
+      }
+    } else {
+      // Insert new user
+      const { error: insertError } = await supabase.from("users").insert({
+        user_id: user.id,
+        email: user.email!,
+        role: userRole,
+        name:
+          user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+      });
+
+      if (insertError) {
+        console.error("Error inserting user:", insertError);
+        throw new Error("Failed to create user profile");
+      }
+    }
+
+    console.log("User role updated successfully");
+
+    // Update user metadata
+    await supabase.auth.updateUser({
+      data: { user_role: userRole },
+    });
+
+    revalidatePath("/", "layout");
+
+    // Redirect based on user role
+    const redirectPath =
+      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+    redirect(redirectPath);
+  } catch (error) {
+    console.error("Update user role error:", error);
+    throw error;
+  }
+}
+
 // const signInWith = (provider) => async () => {
 //   const supabase = await createClient();
 
