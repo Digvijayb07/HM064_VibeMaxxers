@@ -223,3 +223,94 @@ export async function signInWithGitHub() {
     redirect(data.url);
   }
 }
+
+export async function createProject(formData: FormData) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    // Parse form data
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const budgetStr = formData.get("budget") as string;
+    const duration = formData.get("duration") as string;
+    const deadline = formData.get("deadline") as string;
+    const level = formData.get("level") as string;
+    const skills = formData.get("skills") as string; // JSON stringified array
+
+    console.log("Creating project with data:", {
+      title,
+      category,
+      budget: budgetStr,
+      duration,
+      deadline,
+      level,
+      skills: skills || "[]",
+      user_id: user.id,
+    });
+
+    // Validate required fields
+    if (!title || !description || !budgetStr || !deadline) {
+      throw new Error("Missing required fields");
+    }
+
+    // Validate and parse budget
+    const budgetNum = parseInt(budgetStr, 10);
+    if (isNaN(budgetNum) || budgetNum <= 0) {
+      throw new Error("Budget must be a valid positive number");
+    }
+
+    const projectData = {
+      user_id: user.id,
+      title,
+      description,
+      category,
+      budget: budgetNum,
+      duration,
+      deadline,
+      exp_level: level,
+      skills_req: JSON.parse(skills || "[]"),
+      status: "open",
+    };
+
+    console.log("Inserting project data:", projectData);
+
+    // Insert project into database
+    const { data, error: insertError } = await supabase
+      .from("projects")
+      .insert(projectData)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting project:", insertError);
+      console.error("Error details:", {
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint,
+        code: insertError.code,
+      });
+      throw new Error(`Failed to create project: ${insertError.message}`);
+    }
+
+    console.log("Project created successfully:", data);
+
+    revalidatePath("/company/dashboard");
+    revalidatePath("/company/projects");
+    redirect("/company/dashboard");
+  } catch (error) {
+    console.error("Create project error:", error);
+    throw error;
+  }
+}

@@ -1,25 +1,27 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { createProject } from "@/lib/auth-actions";
 
 interface ProjectForm {
-  title: string
-  description: string
-  category: "web" | "mobile" | "design" | "other"
-  budget: string
-  duration: string
-  skills: string[]
-  deadline: string
-  level: "beginner" | "intermediate" | "advanced"
+  title: string;
+  description: string;
+  category: "web" | "mobile" | "design" | "other";
+  budget: string;
+  duration: string;
+  skills: string[];
+  deadline: string;
+  level: "beginner" | "intermediate" | "advanced";
 }
 
 export default function CreateProjectPage() {
@@ -32,47 +34,57 @@ export default function CreateProjectPage() {
     skills: [],
     deadline: "",
     level: "intermediate",
-  })
-  const [skillInput, setSkillInput] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  });
+  const [skillInput, setSkillInput] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => {
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
-    }))
-  }
+    }));
+  };
 
   const addSkill = () => {
     if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
       setFormData((prev) => ({
         ...prev,
         skills: [...prev.skills, skillInput.trim()],
-      }))
-      setSkillInput("")
+      }));
+      setSkillInput("");
     }
-  }
+  };
 
   const removeSkill = (skill: string) => {
     setFormData((prev) => ({
       ...prev,
       skills: prev.skills.filter((s) => s !== skill),
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
 
-    // Simulate submission
-    setTimeout(() => {
-      setIsSubmitting(false)
-      // In production, this would save to a database
-      alert("Project posted successfully!")
-      window.location.href = "/company/dashboard"
-    }, 1000)
-  }
+    try {
+      const form = e.target as HTMLFormElement;
+      const formData = new FormData(form);
+
+      await createProject(formData);
+      // Redirect is handled by the server action
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create project");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,7 +92,9 @@ export default function CreateProjectPage() {
       <header className="border-b border-border bg-card sticky top-0 z-50">
         <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
-            <Link href="/company/dashboard" className="p-1 hover:bg-muted rounded-lg transition-colors">
+            <Link
+              href="/company/dashboard"
+              className="p-1 hover:bg-muted rounded-lg transition-colors">
               <ArrowLeft className="h-5 w-5 text-muted-foreground" />
             </Link>
             <div className="flex items-center gap-2">
@@ -95,7 +109,15 @@ export default function CreateProjectPage() {
 
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Card className="p-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Post a New Project</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">
+            Post a New Project
+          </h2>
+
+          {error && (
+            <div className="mb-4 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Title */}
@@ -116,7 +138,9 @@ export default function CreateProjectPage() {
 
             {/* Description */}
             <div>
-              <Label htmlFor="description" className="text-foreground font-semibold">
+              <Label
+                htmlFor="description"
+                className="text-foreground font-semibold">
                 Project Description
               </Label>
               <textarea
@@ -133,7 +157,9 @@ export default function CreateProjectPage() {
 
             {/* Category */}
             <div>
-              <Label htmlFor="category" className="text-foreground font-semibold">
+              <Label
+                htmlFor="category"
+                className="text-foreground font-semibold">
                 Category
               </Label>
               <select
@@ -141,8 +167,7 @@ export default function CreateProjectPage() {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-2 w-full px-3 py-2 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-              >
+                className="mt-2 w-full px-3 py-2 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="web">Web Development</option>
                 <option value="mobile">Mobile Development</option>
                 <option value="design">Design</option>
@@ -153,7 +178,9 @@ export default function CreateProjectPage() {
             {/* Grid: Budget, Duration, Level */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="budget" className="text-foreground font-semibold">
+                <Label
+                  htmlFor="budget"
+                  className="text-foreground font-semibold">
                   Budget ($)
                 </Label>
                 <Input
@@ -169,7 +196,9 @@ export default function CreateProjectPage() {
               </div>
 
               <div>
-                <Label htmlFor="duration" className="text-foreground font-semibold">
+                <Label
+                  htmlFor="duration"
+                  className="text-foreground font-semibold">
                   Duration
                 </Label>
                 <Input
@@ -184,7 +213,9 @@ export default function CreateProjectPage() {
               </div>
 
               <div>
-                <Label htmlFor="level" className="text-foreground font-semibold">
+                <Label
+                  htmlFor="level"
+                  className="text-foreground font-semibold">
                   Experience Level
                 </Label>
                 <select
@@ -192,8 +223,7 @@ export default function CreateProjectPage() {
                   name="level"
                   value={formData.level}
                   onChange={handleChange}
-                  className="mt-2 w-full px-3 py-2 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                >
+                  className="mt-2 w-full px-3 py-2 border border-border rounded-lg text-foreground bg-background focus:outline-none focus:ring-2 focus:ring-primary">
                   <option value="beginner">Beginner</option>
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
@@ -203,7 +233,9 @@ export default function CreateProjectPage() {
 
             {/* Deadline */}
             <div>
-              <Label htmlFor="deadline" className="text-foreground font-semibold">
+              <Label
+                htmlFor="deadline"
+                className="text-foreground font-semibold">
                 Application Deadline
               </Label>
               <Input
@@ -219,7 +251,9 @@ export default function CreateProjectPage() {
 
             {/* Skills */}
             <div>
-              <Label className="text-foreground font-semibold">Required Skills</Label>
+              <Label className="text-foreground font-semibold">
+                Required Skills
+              </Label>
               <div className="mt-2 flex gap-2">
                 <Input
                   placeholder="e.g., React, TypeScript"
@@ -227,8 +261,8 @@ export default function CreateProjectPage() {
                   onChange={(e) => setSkillInput(e.target.value)}
                   onKeyPress={(e) => {
                     if (e.key === "Enter") {
-                      e.preventDefault()
-                      addSkill()
+                      e.preventDefault();
+                      addSkill();
                     }
                   }}
                 />
@@ -240,28 +274,43 @@ export default function CreateProjectPage() {
               {formData.skills.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {formData.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="cursor-pointer">
+                    <Badge
+                      key={skill}
+                      variant="secondary"
+                      className="cursor-pointer">
                       {skill}
                       <button
                         type="button"
                         onClick={() => removeSkill(skill)}
-                        className="ml-2 text-xs opacity-70 hover:opacity-100"
-                      >
+                        className="ml-2 text-xs opacity-70 hover:opacity-100">
                         ×
                       </button>
                     </Badge>
                   ))}
                 </div>
               )}
+
+              {/* Hidden input for skills */}
+              <input
+                type="hidden"
+                name="skills"
+                value={JSON.stringify(formData.skills)}
+              />
             </div>
 
             {/* Buttons */}
             <div className="flex gap-4 pt-4">
-              <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90 flex-1">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-primary hover:bg-primary/90 flex-1">
                 {isSubmitting ? "Posting..." : "Post Project"}
               </Button>
               <Link href="/company/dashboard" className="flex-1">
-                <Button type="button" variant="outline" className="w-full bg-transparent">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full bg-transparent">
                   Cancel
                 </Button>
               </Link>
@@ -270,5 +319,5 @@ export default function CreateProjectPage() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
