@@ -15,10 +15,31 @@ export async function login(formData: FormData) {
     password: formData.get("password") as string,
   };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const { data: authData, error } =
+    await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    redirect("/error");
+    console.error("Login error:", error);
+    redirect("/signin?error=Invalid credentials");
+  }
+
+  // Check user role and redirect accordingly
+  if (authData.user) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    if (userData?.role) {
+      const redirectPath =
+        userData.role === "company"
+          ? "/company/dashboard"
+          : "/freelancer/dashboard";
+
+      revalidatePath("/", "layout");
+      redirect(redirectPath);
+    }
   }
 
   revalidatePath("/", "layout");

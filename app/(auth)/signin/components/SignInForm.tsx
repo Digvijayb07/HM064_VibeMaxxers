@@ -40,8 +40,26 @@ export function LoginForm({
         return;
       }
 
-      // After successful login, redirect to home
-      router.push("/");
+      // Check user role and redirect to appropriate dashboard
+      if (data.user) {
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (userData?.role) {
+          const redirectPath =
+            userData.role === "company"
+              ? "/company/dashboard"
+              : "/freelancer/dashboard";
+          router.push(redirectPath);
+        } else {
+          // User exists in auth but not in users table - should not happen
+          setError("Account setup incomplete. Please contact support.");
+          setLoading(false);
+        }
+      }
     } catch (err) {
       setError("An unexpected error occurred");
       setLoading(false);
