@@ -26,31 +26,73 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = await createClient();
+  try {
+    const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const firstName = formData.get("first-name") as string;
-  const lastName = formData.get("last-name") as string;
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
-    options: {
-      data: {
-        full_name: `${firstName + " " + lastName}`,
-        email: formData.get("email") as string,
+    // type-casting here for convenience
+    // in practice, you should validate your inputs
+    const firstName = formData.get("first-name") as string;
+    const lastName = formData.get("last-name") as string;
+    const userRole = formData.get("user-role") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const fullName = `${firstName} ${lastName}`;
+
+    console.log("Signup attempt:", { email, fullName, userRole });
+
+    if (!email || !password || !firstName || !lastName || !userRole) {
+      console.error("Missing required fields");
+      redirect("/error");
+    }
+
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: fullName,
+          user_role: userRole,
+        },
+        emailRedirectTo: `${
+          process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+        }/auth/callback`,
       },
-    },
-  };
+    });
 
-  const { error } = await supabase.auth.signUp(data);
+    if (error) {
+      console.error("Auth signup error:", error);
+      redirect("/error");
+    }
 
-  if (error) {
+    console.log("Auth user created:", authData.user?.id);
+
+    // Insert user data into the users table
+    if (authData.user) {
+      const { error: insertError } = await supabase.from("users").insert({
+        user_id: authData.user.id,
+        email: email,
+        role: userRole,
+        name: fullName,
+      });
+
+      if (insertError) {
+        console.error("Error inserting user into database:", insertError);
+        // Continue with redirect even if insert fails
+      } else {
+        console.log("User data inserted into users table");
+      }
+    }
+
+    revalidatePath("/", "layout");
+
+    // Redirect based on user role
+    const redirectPath =
+      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+    redirect(redirectPath);
+  } catch (error) {
+    console.error("Signup error:", error);
     redirect("/error");
   }
-
-  revalidatePath("/", "layout");
-  redirect("/");
 }
 
 export async function signout() {
