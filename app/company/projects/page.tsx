@@ -1,36 +1,78 @@
-"use client"
+"use client";
 
-import { Suspense } from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Plus, Search } from "lucide-react"
-import Link from "next/link"
-import { mockProjects } from "@/lib/mock-data"
+import { Suspense, useEffect } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  budget: number;
+  duration: string;
+  deadline: string;
+  status: string;
+  exp_level: string;
+  skills_req: string[];
+  user_id: string;
+}
 
 function ProjectsContent() {
-  const [projects] = useState(mockProjects.filter((p) => ["comp-001", "comp-002"].includes(p.companyId)))
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null)
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: projectsData, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching projects:", error);
+        } else if (projectsData) {
+          setProjects(projectsData);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchProjects();
+  }, []);
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
       project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = !selectedStatus || project.status === selectedStatus
-    return matchesSearch && matchesStatus
-  })
+      project.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !selectedStatus || project.status === selectedStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       open: "bg-green-50 text-green-700 border-green-200",
       "in-progress": "bg-blue-50 text-blue-700 border-blue-200",
       completed: "bg-gray-50 text-gray-700 border-gray-200",
-    }
-    return colors[status] || colors.open
-  }
+    };
+    return colors[status] || colors.open;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,12 +88,16 @@ function ProjectsContent() {
             </div>
             <div className="flex items-center gap-4">
               <Link href="/company/dashboard">
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground">
                   Dashboard
                 </Button>
               </Link>
               <Link href="/company/applications">
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground">
                   Applications
                 </Button>
               </Link>
@@ -65,7 +111,9 @@ function ProjectsContent() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-foreground">My Projects</h2>
-            <p className="mt-2 text-muted-foreground">Manage all your posted projects</p>
+            <p className="mt-2 text-muted-foreground">
+              Manage all your posted projects
+            </p>
           </div>
           <Link href="/company/create-project">
             <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2">
@@ -92,8 +140,9 @@ function ProjectsContent() {
               variant={selectedStatus === null ? "default" : "outline"}
               size="sm"
               onClick={() => setSelectedStatus(null)}
-              className={selectedStatus === null ? "bg-primary hover:bg-primary/90" : ""}
-            >
+              className={
+                selectedStatus === null ? "bg-primary hover:bg-primary/90" : ""
+              }>
               All ({projects.length})
             </Button>
             {["open", "in-progress", "completed"].map((status) => (
@@ -102,71 +151,105 @@ function ProjectsContent() {
                 variant={selectedStatus === status ? "default" : "outline"}
                 size="sm"
                 onClick={() => setSelectedStatus(status)}
-                className={selectedStatus === status ? "bg-primary hover:bg-primary/90" : ""}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)} ({projects.filter((p) => p.status === status).length}
-                )
+                className={
+                  selectedStatus === status
+                    ? "bg-primary hover:bg-primary/90"
+                    : ""
+                }>
+                {status.charAt(0).toUpperCase() + status.slice(1)} (
+                {projects.filter((p) => p.status === status).length})
               </Button>
             ))}
           </div>
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 gap-4">
-          {filteredProjects.map((project) => (
-            <Link key={project.id} href={`/company/projects/${project.id}`}>
-              <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground">{project.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">{project.description}</p>
+        {isLoading ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">Loading projects...</p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredProjects.map((project) => (
+              <Link key={project.id} href={`/company/projects/${project.id}`}>
+                <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-foreground">
+                        {project.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                        {project.description}
+                      </p>
+                    </div>
+                    <Badge
+                      className={`${getStatusColor(project.status)} capitalize ml-4`}>
+                      {project.status}
+                    </Badge>
                   </div>
-                  <Badge className={`${getStatusColor(project.status)} capitalize ml-4`}>{project.status}</Badge>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-border">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Budget</p>
-                    <p className="font-bold text-foreground">${project.budget.toLocaleString()}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-border">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Budget</p>
+                      <p className="font-bold text-foreground">
+                        ${project.budget.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">
+                        Applications
+                      </p>
+                      <p className="font-bold text-foreground">
+                        {project.applicantCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Duration</p>
+                      <p className="font-bold text-foreground">
+                        {project.duration}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Deadline</p>
+                      <p className="font-bold text-foreground">
+                        {project.deadline}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Applications</p>
-                    <p className="font-bold text-foreground">{project.applicantCount}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Duration</p>
-                    <p className="font-bold text-foreground">{project.duration}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Deadline</p>
-                    <p className="font-bold text-foreground">{project.deadline}</p>
-                  </div>
-                </div>
 
-                <div className="mt-4 flex gap-2">
-                  <Button variant="outline" size="sm" className="bg-transparent">
-                    View Applications
-                  </Button>
-                  <Button variant="outline" size="sm" className="bg-transparent">
-                    Edit
-                  </Button>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <div className="mt-4 flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent">
+                      View Applications
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="bg-transparent">
+                      Edit
+                    </Button>
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {filteredProjects.length === 0 && (
+        {!isLoading && filteredProjects.length === 0 && (
           <Card className="p-12 text-center">
             <p className="text-muted-foreground mb-4">No projects found.</p>
             <Link href="/company/create-project">
-              <Button className="bg-primary hover:bg-primary/90">Post Your First Project</Button>
+              <Button className="bg-primary hover:bg-primary/90">
+                Post Your First Project
+              </Button>
             </Link>
           </Card>
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default function CompanyProjectsPage() {
@@ -174,5 +257,5 @@ export default function CompanyProjectsPage() {
     <Suspense fallback={null}>
       <ProjectsContent />
     </Suspense>
-  )
+  );
 }
