@@ -14,9 +14,22 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
-import { mockProjects } from "@/lib/mock-data";
 import { signout } from "@/lib/auth-actions";
 import { createClient } from "@/utils/supabase/client";
+
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  budget: number;
+  duration: string;
+  deadline: string;
+  status: string;
+  exp_level: string;
+  skills_req: string[];
+  user_id: string;
+}
 
 interface DashboardStats {
   totalProjects: number;
@@ -25,44 +38,96 @@ interface DashboardStats {
   totalSpent: number;
 }
 
+interface ProjectWithApplications extends Project {
+  applicantCount: number;
+}
+
 export default function CompanyDashboardPage() {
-  const [projects] = useState(
-    mockProjects.filter((p) => ["comp-001", "comp-002"].includes(p.companyId)),
-  );
+  const [projects, setProjects] = useState<ProjectWithApplications[]>([]);
   const [userData, setUserData] = useState<{
     name: string;
     email: string;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProjects: 0,
+    activeProjects: 0,
+    totalApplications: 0,
+    totalSpent: 0,
+  });
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data } = await supabase
+        // Fetch user data
+        const { data: userDataResult } = await supabase
           .from("users")
           .select("name, email")
           .eq("user_id", user.id)
           .single();
 
-        if (data) {
-          setUserData(data);
+        if (userDataResult) {
+          setUserData(userDataResult);
+        }
+
+        // Fetch user's projects
+        const { data: projectsData, error } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching projects:", error);
+        } else if (projectsData) {
+          // Fetch application counts for each project
+          const projectIds = projectsData.map((p) => p.id);
+
+          const { data: applicationsData } = await supabase
+            .from("applications")
+            .select("project_id")
+            .in("project_id", projectIds);
+
+          // Count applications per project
+          const applicationCounts: Record<number, number> = {};
+          applicationsData?.forEach((app) => {
+            applicationCounts[app.project_id] =
+              (applicationCounts[app.project_id] || 0) + 1;
+          });
+
+          // Add application counts to projects
+          const projectsWithCounts = projectsData.map((project) => ({
+            ...project,
+            applicantCount: applicationCounts[project.id] || 0,
+          }));
+
+          setProjects(projectsWithCounts);
+
+          // Calculate stats
+          const totalApplications = applicationsData?.length || 0;
+          setStats({
+            totalProjects: projectsData.length,
+            activeProjects: projectsData.filter((p) => p.status === "open")
+              .length,
+            totalApplications,
+            totalSpent: projectsData.reduce(
+              (sum, p) => sum + (p.budget || 0),
+              0,
+            ),
+          });
         }
       }
+
+      setIsLoading(false);
     };
 
-    fetchUser();
+    fetchData();
   }, []);
-
-  const stats: DashboardStats = {
-    totalProjects: projects.length,
-    activeProjects: projects.filter((p) => p.status === "open").length,
-    totalApplications: projects.reduce((sum, p) => sum + p.applicantCount, 0),
-    totalSpent: projects.reduce((sum, p) => sum + p.budget, 0),
-  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -211,60 +276,78 @@ export default function CompanyDashboardPage() {
           <h3 className="text-xl font-bold text-foreground mb-4">
             Recent Projects
           </h3>
-          <div className="grid grid-cols-1 gap-4">
-            {projects.map((project) => (
-              <Link key={project.id} href={`/company/projects/${project.id}`}>
-                <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h4 className="font-semibold text-foreground">
-                        {project.title}
-                      </h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {project.description.substring(0, 100)}...
-                      </p>
-                    </div>
-                    <Badge
-                      className={`${getStatusColor(project.status)} capitalize`}>
-                      {project.status}
-                    </Badge>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Budget</p>
-                      <p className="text-sm font-bold text-foreground">
-                        ${project.budget.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">
-                        Applications
-                      </p>
-                      <p className="text-sm font-bold text-foreground">
-                        {project.applicantCount}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Deadline</p>
-                      <p className="text-sm font-bold text-foreground">
-                        {project.deadline}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button variant="outline" size="sm">
-                      View Applications
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Edit Project
-                    </Button>
-                  </div>
-                </Card>
+          {isLoading ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Loading projects...</p>
+            </Card>
+          ) : projects.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">No projects yet</p>
+              <Link href="/company/create-project">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Project
+                </Button>
               </Link>
-            ))}
-          </div>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {projects.map((project) => (
+                <Link key={project.id} href={`/company/projects/${project.id}`}>
+                  <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground">
+                          {project.title}
+                        </h4>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {project.description.substring(0, 100)}...
+                        </p>
+                      </div>
+                      <Badge
+                        className={`${getStatusColor(project.status)} capitalize`}>
+                        {project.status}
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Budget</p>
+                        <p className="text-sm font-bold text-foreground">
+                          ${project.budget.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Applications
+                        </p>
+                        <p className="text-sm font-bold text-foreground">
+                          {project.applicantCount}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Deadline
+                        </p>
+                        <p className="text-sm font-bold text-foreground">
+                          {project.deadline}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex gap-2">
+                      <Button variant="outline" size="sm">
+                        View Applications
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        Edit Project
+                      </Button>
+                    </div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

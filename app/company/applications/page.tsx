@@ -1,39 +1,138 @@
-"use client"
+"use client";
 
-import { Suspense } from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Search, Star, DollarSign } from "lucide-react"
-import Link from "next/link"
-import { mockApplications, mockProjects } from "@/lib/mock-data"
-import { mockFreelancerProfiles } from "@/lib/mock-profiles"
-import { Input } from "@/components/ui/input"
+import { Suspense, useEffect } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Search, Star, DollarSign, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { createClient } from "@/utils/supabase/client";
+
+interface Application {
+  id: number;
+  user_id: string;
+  project_id: number;
+  created_at: string;
+  users: {
+    name: string;
+    email: string;
+    professional_title: string;
+    hr_rate: number;
+    skills: string[];
+  };
+  projects: {
+    title: string;
+    budget: number;
+  };
+}
 
 function ApplicationsContent() {
-  const [applications] = useState(mockApplications)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [filterStatus, setFilterStatus] = useState<string | null>(null)
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const getFreelancerProfile = (freelancerId: string) => {
-    return mockFreelancerProfiles.find((p) => p.id === freelancerId)
-  }
+  useEffect(() => {
+    fetchApplications();
+  }, []);
+
+  const fetchApplications = async () => {
+    try {
+      const supabase = createClient();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        console.error("No user found");
+        setLoading(false);
+        return;
+      }
+
+      // First get all projects owned by this company
+      const { data: userProjects, error: projectsError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id);
+
+      if (projectsError) {
+        console.error("Error fetching projects:", projectsError);
+        setLoading(false);
+        return;
+      }
+
+      const projectIds = userProjects?.map((p) => p.id) || [];
+
+      if (projectIds.length === 0) {
+        setApplications([]);
+        setLoading(false);
+        return;
+      }
+
+      // Now get all applications for these projects with user and project details
+      const { data, error } = await supabase
+        .from("applications")
+        .select(
+          `
+          id,
+          user_id,
+          project_id,
+          created_at,
+          users!inner (
+            name,
+            email,
+            professional_title,
+            hr_rate,
+            skills
+          ),
+          projects!inner (
+            title,
+            budget
+          )
+        `,
+        )
+        .in("project_id", projectIds)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching applications:", error);
+        setLoading(false);
+        return;
+      }
+
+      setApplications(data || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error:", error);
+      setLoading(false);
+    }
+  };
 
   const filteredApplications = applications.filter((app) => {
-    const matchesSearch = searchQuery === "" || app.freelancerName.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = !filterStatus || app.status === filterStatus
-    return matchesSearch && matchesStatus
-  })
+    const matchesSearch =
+      searchQuery === "" ||
+      app.users.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.projects.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      submitted: "bg-blue-50 text-blue-700 border-blue-200",
-      shortlisted: "bg-green-50 text-green-700 border-green-200",
-      rejected: "bg-red-50 text-red-700 border-red-200",
-      awarded: "bg-purple-50 text-purple-700 border-purple-200",
-    }
-    return colors[status] || colors.submitted
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
   return (
@@ -50,12 +149,16 @@ function ApplicationsContent() {
             </div>
             <div className="flex items-center gap-4">
               <Link href="/company/dashboard">
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground">
                   Dashboard
                 </Button>
               </Link>
               <Link href="/company/projects">
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground">
                   Projects
                 </Button>
               </Link>
@@ -67,8 +170,12 @@ function ApplicationsContent() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Page Title */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground">All Applications</h2>
-          <p className="mt-2 text-muted-foreground">Review and manage all project applications</p>
+          <h2 className="text-3xl font-bold text-foreground">
+            All Applications
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Review and manage all project applications
+          </p>
         </div>
 
         {/* Search and Filters */}
@@ -76,126 +183,103 @@ function ApplicationsContent() {
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search by freelancer name..."
+              placeholder="Search by freelancer name or project..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant={filterStatus === null ? "default" : "outline"}
-              size="sm"
-              onClick={() => setFilterStatus(null)}
-              className={filterStatus === null ? "bg-primary hover:bg-primary/90" : ""}
-            >
-              All ({applications.length})
-            </Button>
-            {["submitted", "shortlisted", "awarded", "rejected"].map((status) => (
-              <Button
-                key={status}
-                variant={filterStatus === status ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilterStatus(status)}
-                className={filterStatus === status ? "bg-primary hover:bg-primary/90" : ""}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)} (
-                {applications.filter((a) => a.status === status).length})
-              </Button>
-            ))}
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary">
+              Total Applications: {applications.length}
+            </Badge>
           </div>
         </div>
 
         {/* Applications List */}
         <div className="space-y-4">
-          {filteredApplications.map((app) => {
-            const project = mockProjects.find((p) => p.id === app.projectId)
-            const profile = getFreelancerProfile(app.freelancerId)
-
-            return (
-              <Card key={app.id} className="p-6 hover:shadow-md transition-all">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">{app.freelancerName}</h3>
-                    {profile && <p className="text-sm text-muted-foreground">{profile.title}</p>}
-                    <p className="text-sm text-muted-foreground mt-1">{project?.title}</p>
-                  </div>
-                  <Badge className={`${getStatusColor(app.status)} capitalize`}>{app.status}</Badge>
+          {filteredApplications.map((app) => (
+            <Card key={app.id} className="p-6 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">
+                    {app.users.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {app.users.professional_title || "Developer"}
+                  </p>
+                  <p className="text-sm text-accent mt-1">
+                    Applied to: {app.projects.title}
+                  </p>
                 </div>
+                <Badge variant="secondary" className="capitalize">
+                  Applied
+                </Badge>
+              </div>
 
-                <p className="text-foreground mb-4">{app.coverLetter}</p>
+              {/* Freelancer Details */}
+              <div className="mb-4 grid grid-cols-2 md:grid-cols-3 gap-4 py-4 border-t border-b border-border">
+                <div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    Hourly Rate
+                  </p>
+                  <p className="font-semibold text-foreground">
+                    ${app.users.hr_rate || 0}/hr
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Applied On</p>
+                  <p className="font-semibold text-foreground">
+                    {formatDate(app.created_at)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Project Budget
+                  </p>
+                  <p className="font-semibold text-foreground">
+                    ${app.projects.budget.toLocaleString()}
+                  </p>
+                </div>
+              </div>
 
-                {/* Freelancer Stats */}
-                {profile && (
-                  <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-4 py-4 border-t border-b border-border">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Rating</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <span className="font-semibold text-foreground">{profile.rating}</span>
-                        <Star className="h-3 w-3 fill-accent text-accent" />
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Projects Done</p>
-                      <p className="font-semibold text-foreground mt-1">{profile.completedProjects}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Hourly Rate</p>
-                      <p className="font-semibold text-foreground mt-1">${profile.hourlyRate}/hr</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Experience</p>
-                      <p className="font-semibold text-foreground mt-1">{profile.experience}+ years</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Application Details */}
-                <div className="mb-4 grid grid-cols-2 md:grid-cols-3 gap-4 py-4 border-t border-b border-border">
-                  <div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      Bid
-                    </p>
-                    <p className="font-semibold text-foreground">${app.bidAmount.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Applied</p>
-                    <p className="font-semibold text-foreground">{app.submittedAt}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Proposal</p>
-                    <p className="font-semibold text-foreground truncate">{app.proposalText.substring(0, 20)}...</p>
+              {/* Skills */}
+              {app.users.skills && app.users.skills.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-xs text-muted-foreground mb-2">Skills</p>
+                  <div className="flex flex-wrap gap-2">
+                    {app.users.skills.slice(0, 5).map((skill: string) => (
+                      <Badge key={skill} variant="outline" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                    {app.users.skills.length > 5 && (
+                      <Badge variant="outline" className="text-xs">
+                        +{app.users.skills.length - 5} more
+                      </Badge>
+                    )}
                   </div>
                 </div>
+              )}
 
-                {/* Actions */}
-                <div className="flex gap-2">
-                  {profile && (
-                    <Button variant="outline" size="sm" className="bg-transparent">
-                      View Profile
-                    </Button>
-                  )}
-                  <Link href={`/company/projects/${app.projectId}`}>
-                    <Button variant="outline" size="sm" className="bg-transparent">
-                      View Project
-                    </Button>
-                  </Link>
-                  {app.status === "submitted" && (
-                    <>
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700 flex-1">
-                        Shortlist
-                      </Button>
-                      <Button size="sm" variant="outline" className="bg-transparent">
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </Card>
-            )
-          })}
+              {/* Actions */}
+              <div className="flex gap-2">
+                <Link href={`/company/projects/${app.project_id}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-transparent">
+                    View Project
+                  </Button>
+                </Link>
+                <Button size="sm" className="bg-primary hover:bg-primary/90">
+                  Contact Freelancer
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
 
         {filteredApplications.length === 0 && (
@@ -205,7 +289,7 @@ function ApplicationsContent() {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default function CompanyApplicationsPage() {
@@ -213,5 +297,5 @@ export default function CompanyApplicationsPage() {
     <Suspense fallback={null}>
       <ApplicationsContent />
     </Suspense>
-  )
+  );
 }

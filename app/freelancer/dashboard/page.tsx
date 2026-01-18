@@ -13,9 +13,22 @@ import {
   LogOut,
 } from "lucide-react";
 import Link from "next/link";
-import { mockApplications, mockProjects } from "@/lib/mock-data";
 import { signout } from "@/lib/auth-actions";
 import { createClient } from "@/utils/supabase/client";
+
+interface Application {
+  id: number;
+  user_id: string;
+  project_id: number;
+  created_at: string;
+  project?: {
+    id: number;
+    title: string;
+    budget: number;
+    category: string;
+    status: string;
+  };
+}
 
 interface DashboardStats {
   totalApplications: number;
@@ -25,62 +38,89 @@ interface DashboardStats {
 }
 
 export default function FreelancerDashboardPage() {
-  const [applications] = useState(mockApplications);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [userData, setUserData] = useState<{
     name: string;
     email: string;
   } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data } = await supabase
+        // Fetch user data
+        const { data: userDataResult } = await supabase
           .from("users")
           .select("name, email")
           .eq("user_id", user.id)
           .single();
 
-        if (data) {
-          setUserData(data);
+        if (userDataResult) {
+          setUserData(userDataResult);
+        }
+
+        // Fetch user's applications with project details
+        const { data: applicationsData, error } = await supabase
+          .from("applications")
+          .select(
+            `
+            *,
+            project:projects (
+              id,
+              title,
+              budget,
+              category,
+              status
+            )
+          `,
+          )
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching applications:", error);
+        } else if (applicationsData) {
+          setApplications(applicationsData);
         }
       }
+
+      setIsLoading(false);
     };
 
-    fetchUser();
+    fetchData();
   }, []);
 
   const stats: DashboardStats = {
     totalApplications: applications.length,
-    shortlisted: applications.filter((a) => a.status === "shortlisted").length,
-    pending: applications.filter((a) => a.status === "submitted").length,
-    successRate: "33%",
+    shortlisted: 0, // Can be calculated when we add application status
+    pending: applications.filter((a) => a.project?.status === "open").length,
+    successRate:
+      applications.length > 0
+        ? `${Math.round((applications.filter((a) => a.project?.status === "open").length / applications.length) * 100)}%`
+        : "0%",
   };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      submitted: "bg-blue-50 text-blue-700 border-blue-200",
-      shortlisted: "bg-green-50 text-green-700 border-green-200",
-      rejected: "bg-red-50 text-red-700 border-red-200",
-      awarded: "bg-purple-50 text-purple-700 border-purple-200",
+      open: "bg-green-50 text-green-700 border-green-200",
+      closed: "bg-gray-50 text-gray-700 border-gray-200",
     };
-    return colors[status] || colors.submitted;
+    return colors[status] || colors.open;
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "shortlisted":
+      case "open":
         return <CheckCircle2 className="h-4 w-4 text-green-600" />;
-      case "submitted":
-        return <Clock className="h-4 w-4 text-blue-600" />;
-      case "awarded":
-        return <CheckCircle2 className="h-4 w-4 text-purple-600" />;
+      case "closed":
+        return <AlertCircle className="h-4 w-4 text-gray-600" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
+        return <Clock className="h-4 w-4 text-blue-600" />;
     }
   };
 
@@ -236,10 +276,20 @@ export default function FreelancerDashboardPage() {
           <h3 className="text-xl font-bold text-foreground mb-4">
             Your Recent Applications
           </h3>
-          <div className="space-y-3">
-            {applications.map((app) => {
-              const project = mockProjects.find((p) => p.id === app.projectId);
-              return (
+          {isLoading ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">Loading applications...</p>
+            </Card>
+          ) : applications.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground mb-4">No applications yet</p>
+              <Link href="/freelancer/projects">
+                <Button>Browse Projects</Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {applications.slice(0, 5).map((app) => (
                 <Card
                   key={app.id}
                   className="p-6 hover:shadow-md transition-all">
@@ -247,41 +297,46 @@ export default function FreelancerDashboardPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h4 className="font-semibold text-foreground">
-                          {project?.title}
+                          {app.project?.title || "Project"}
                         </h4>
                         <Badge
-                          className={`${getStatusColor(app.status)} capitalize text-xs`}>
+                          className={`${getStatusColor(app.project?.status || "open")} capitalize text-xs`}>
                           <span className="mr-1">
-                            {getStatusIcon(app.status)}
+                            {getStatusIcon(app.project?.status || "open")}
                           </span>
-                          {app.status}
+                          {app.project?.status || "Pending"}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        {app.coverLetter}
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Company Project
                       </p>
-                      <div className="flex gap-4 text-sm">
-                        <span className="text-foreground">
-                          Bid:{" "}
-                          <span className="font-semibold">
-                            ${app.bidAmount.toLocaleString()}
-                          </span>
+                      <div className="flex gap-4 text-sm text-muted-foreground">
+                        <span>
+                          Applied:{" "}
+                          {new Date(app.created_at).toLocaleDateString()}
                         </span>
-                        <span className="text-muted-foreground">
-                          Applied: {app.submittedAt}
-                        </span>
+                        {app.project && (
+                          <>
+                            <span>
+                              Budget: ${app.project.budget.toLocaleString()}
+                            </span>
+                            <span className="capitalize">
+                              Category: {app.project.category}
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
-                    <Link href={`/freelancer/projects/${app.projectId}`}>
+                    <Link href={`/freelancer/projects/${app.project_id}`}>
                       <Button variant="outline" size="sm">
                         View Project
                       </Button>
                     </Link>
                   </div>
                 </Card>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

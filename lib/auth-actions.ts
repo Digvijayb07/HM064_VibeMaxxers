@@ -15,10 +15,31 @@ export async function login(formData: FormData) {
     password: formData.get("password") as string,
   };
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+  const { data: authData, error } =
+    await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    redirect("/error");
+    console.error("Login error:", error);
+    redirect("/signin?error=Invalid credentials");
+  }
+
+  // Check user role and redirect accordingly
+  if (authData.user) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("user_id", authData.user.id)
+      .single();
+
+    if (userData?.role) {
+      const redirectPath =
+        userData.role === "company"
+          ? "/company/dashboard"
+          : "/freelancer/dashboard";
+
+      revalidatePath("/", "layout");
+      redirect(redirectPath);
+    }
   }
 
   revalidatePath("/", "layout");
@@ -87,7 +108,9 @@ export async function signup(formData: FormData) {
 
     // Redirect based on user role
     const redirectPath =
-      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+      userRole === "company"
+        ? "/company/dashboard"
+        : "/freelancer/complete-profile";
     redirect(redirectPath);
   } catch (error) {
     console.error("Signup error:", error);
@@ -167,7 +190,9 @@ export async function updateUserRole(userRole: "company" | "developer") {
 
     // Redirect based on user role
     const redirectPath =
-      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+      userRole === "company"
+        ? "/company/dashboard"
+        : "/freelancer/complete-profile";
     redirect(redirectPath);
   } catch (error) {
     console.error("Update user role error:", error);
@@ -221,5 +246,253 @@ export async function signInWithGitHub() {
 
   if (data.url) {
     redirect(data.url);
+  }
+}
+
+export async function createProject(formData: FormData) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    // Parse form data
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const category = formData.get("category") as string;
+    const budgetStr = formData.get("budget") as string;
+    const duration = formData.get("duration") as string;
+    const deadline = formData.get("deadline") as string;
+    const level = formData.get("level") as string;
+    const skills = formData.get("skills") as string; // JSON stringified array
+
+    console.log("Creating project with data:", {
+      title,
+      category,
+      budget: budgetStr,
+      duration,
+      deadline,
+      level,
+      skills: skills || "[]",
+      user_id: user.id,
+    });
+
+    // Validate required fields
+    if (!title || !description || !budgetStr || !deadline) {
+      throw new Error("Missing required fields");
+    }
+
+    // Validate and parse budget
+    const budgetNum = parseInt(budgetStr, 10);
+    if (isNaN(budgetNum) || budgetNum <= 0) {
+      throw new Error("Budget must be a valid positive number");
+    }
+
+    const projectData = {
+      user_id: user.id,
+      title,
+      description,
+      category,
+      budget: budgetNum,
+      duration,
+      deadline,
+      exp_level: level,
+      skills_req: JSON.parse(skills || "[]"),
+      status: "open",
+    };
+
+    console.log("Inserting project data:", projectData);
+
+    // Insert project into database
+    const { data, error: insertError } = await supabase
+      .from("projects")
+      .insert(projectData)
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting project:", insertError);
+      console.error("Error details:", {
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint,
+        code: insertError.code,
+      });
+      throw new Error(`Failed to create project: ${insertError.message}`);
+    }
+
+    console.log("Project created successfully:", data);
+
+    revalidatePath("/company/dashboard");
+    revalidatePath("/company/projects");
+    redirect("/company/dashboard");
+  } catch (error) {
+    console.error("Create project error:", error);
+    throw error;
+  }
+}
+
+export async function applyToProject(projectId: number) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    console.log("Applying to project:", { projectId, userId: user.id });
+
+    // Check if user already applied
+    const { data: existingApplication } = await supabase
+      .from("applications")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("project_id", projectId)
+      .single();
+
+    if (existingApplication) {
+      throw new Error("You have already applied to this project");
+    }
+
+    // Insert application into database
+    const { data, error: insertError } = await supabase
+      .from("applications")
+      .insert({
+        user_id: user.id,
+        project_id: projectId,
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Error inserting application:", insertError);
+      throw new Error(`Failed to apply: ${insertError.message}`);
+    }
+
+    console.log("Application submitted successfully:", data);
+
+    revalidatePath("/freelancer/projects");
+    revalidatePath(`/freelancer/projects/${projectId}`);
+    revalidatePath("/freelancer/applications");
+
+    return { success: true, data };
+  } catch (error) {
+    console.error("Apply to project error:", error);
+    throw error;
+  }
+}
+
+export async function createFreelancerProfile(formData: FormData) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    // Parse form data
+    const professionalTitle = formData.get("professional_title") as string;
+    const about = formData.get("about") as string;
+    const hourlyRateStr = formData.get("hourly_rate") as string;
+    const availability = formData.get("availability") as string;
+    const skillsStr = formData.get("skills") as string;
+
+    console.log("Creating freelancer profile with data:", {
+      user_id: user.id,
+      professional_title: professionalTitle,
+      hourly_rate: hourlyRateStr,
+      availability,
+      skills: skillsStr,
+    });
+
+    // Validate required fields
+    if (
+      !professionalTitle ||
+      !about ||
+      !hourlyRateStr ||
+      !availability ||
+      !skillsStr
+    ) {
+      throw new Error("Missing required fields");
+    }
+
+    // Validate and parse hourly rate
+    const hourlyRate = parseFloat(hourlyRateStr);
+    if (isNaN(hourlyRate) || hourlyRate <= 0) {
+      throw new Error("Hourly rate must be a valid positive number");
+    }
+
+    // Parse skills
+    const skills = JSON.parse(skillsStr);
+    if (!Array.isArray(skills) || skills.length === 0) {
+      throw new Error("At least one skill is required");
+    }
+
+    const profileData = {
+      user_id: user.id,
+      professional_title: professionalTitle,
+      about,
+      hr_rate: hourlyRate,
+      availability,
+      skills,
+    };
+
+    console.log("Inserting freelancer profile data:", profileData);
+
+    // Update the existing user record with profile information
+    const { data, error: updateError } = await supabase
+      .from("users")
+      .update({
+        professional_title: professionalTitle,
+        about,
+        hr_rate: hourlyRate,
+        availability,
+        skills,
+      })
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating user profile:", updateError);
+      console.error("Error details:", {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code,
+      });
+      throw new Error(`Failed to create profile: ${updateError.message}`);
+    }
+
+    console.log("User profile updated successfully:", data);
+
+    revalidatePath("/freelancer/dashboard");
+    revalidatePath("/freelancer/profile");
+    redirect("/freelancer/dashboard");
+  } catch (error) {
+    console.error("Create freelancer profile error:", error);
+    throw error;
   }
 }

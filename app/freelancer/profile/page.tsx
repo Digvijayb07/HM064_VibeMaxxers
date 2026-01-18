@@ -1,160 +1,248 @@
 "use client";
 
+import type React from "react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/utils/supabase/client";
-
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 
-export default function DeveloperProfilePage() {
-  const router = useRouter();
+interface ProfileFormData {
+  name: string;
+  title: string;
+  bio: string;
+  skills: string[];
+  hourlyRate: string;
+  availability: "available" | "available-limited" | "unavailable";
+}
 
-  const [name, setName] = useState("");
-  const [headline, setHeadline] = useState("");
-  const [skills, setSkills] = useState("");
-  const [experience, setExperience] = useState("");
-  const [portfolio, setPortfolio] = useState("");
+export default function FreelancerProfilePage() {
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<ProfileFormData>({
+    name: "",
+    title: "",
+    bio: "",
+    skills: [],
+    hourlyRate: "",
+    availability: "available",
+  });
+  const [skillInput, setSkillInput] = useState("");
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // 🔐 Guard: ensure user is authenticated
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
-        router.replace("/auth/login");
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const supabase = createClient();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setLoading(false);
+        return;
       }
-    });
-  }, [router]);
 
-  const handleSubmit = async () => {
-    if (!name || !skills || !experience) {
-      setError("Name, skills, and experience are required");
-      return;
-    }
+      const { data, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
 
-    setLoading(true);
-    setError(null);
+      if (error) {
+        console.error("Error fetching profile:", error);
+        setLoading(false);
+        return;
+      }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      router.replace("/auth/login");
-      return;
-    }
-
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({
-        name,
-        headline,
-        skills: skills.split(",").map((s) => s.trim()),
-        experience,
-        portfolio_links: portfolio
-          ? portfolio.split(",").map((p) => p.trim())
-          : [],
-      })
-      .eq("user_id", user.id);
-
-    if (updateError) {
-      console.error(updateError);
-      setError("Failed to save profile. Please try again.");
+      setProfile(data);
+      setFormData({
+        name: data.name || "",
+        title: data.professional_title || "",
+        bio: data.about || "",
+        skills: data.skills || [],
+        hourlyRate: data.hr_rate?.toString() || "",
+        availability: data.availability || "available",
+      });
       setLoading(false);
-      return;
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
     }
-
-    // ✅ Onboarding complete → dashboard allowed
-    router.replace("/freelancer/dashboard");
   };
 
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const addSkill = () => {
+    if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
+      setFormData((prev) => ({
+        ...prev,
+        skills: [...prev.skills, skillInput.trim()],
+      }));
+      setSkillInput("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((s) => s !== skill),
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      const supabase = createClient();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        alert("User not authenticated");
+        return;
+      }
+
+      const { error } = await supabase
+        .from("users")
+        .update({
+          name: formData.name,
+          professional_title: formData.title,
+          about: formData.bio,
+          hr_rate: parseFloat(formData.hourlyRate),
+          availability: formData.availability,
+          skills: formData.skills,
+        })
+        .eq("user_id", user.id);
+
+      if (error) {
+        alert("Failed to update profile");
+        return;
+      }
+
+      setIsEditing(false);
+      fetchProfile();
+    } catch {
+      alert("Failed to update profile");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="p-8 text-center">
+          <p className="mb-4">No profile found.</p>
+          <Link href="/freelancer/complete-profile">
+            <Button>Complete Profile</Button>
+          </Link>
+        </Card>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <Card className="max-w-xl w-full shadow-lg">
-        <CardHeader>
-          <CardTitle>Complete your developer profile</CardTitle>
-          <CardDescription>
-            This information helps companies evaluate your proposals
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="space-y-5">
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-200 p-3 rounded-md">
-              {error}
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        {!isEditing ? (
+          <Card className="p-8">
+            <div className="mb-6 flex justify-between">
+              <div>
+                <h1 className="text-3xl font-bold">{profile.name}</h1>
+                <p className="text-muted-foreground">
+                  {profile.professional_title}
+                </p>
+              </div>
+              <Button onClick={() => setIsEditing(true)}>Edit</Button>
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label>Full Name</Label>
-            <Input
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+            <p className="mb-6">{profile.about}</p>
 
-          <div className="space-y-2">
-            <Label>Professional Headline</Label>
-            <Input
-              placeholder="Full-stack developer, UI/UX designer, etc."
-              value={headline}
-              onChange={(e) => setHeadline(e.target.value)}
-            />
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {profile.skills?.map((skill: string) => (
+                <Badge key={skill}>{skill}</Badge>
+              ))}
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-8">
+            <form className="space-y-4">
+              <div>
+                <Label>Full Name</Label>
+                <Input name="name" value={formData.name} onChange={handleChange} />
+              </div>
 
-          <div className="space-y-2">
-            <Label>Skills</Label>
-            <Input
-              placeholder="React, Next.js, Node, PostgreSQL"
-              value={skills}
-              onChange={(e) => setSkills(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Separate skills with commas
-            </p>
-          </div>
+              <div>
+                <Label>Professional Title</Label>
+                <Input
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </div>
 
-          <div className="space-y-2">
-            <Label>Experience</Label>
-            <textarea
-              placeholder="Briefly describe your development experience"
-              value={experience}
-              onChange={(e) => setExperience(e.target.value)}
-              rows={4}
-              className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+              <div>
+                <Label>About</Label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  className="w-full border rounded p-2"
+                />
+              </div>
 
-          </div>
+              <div>
+                <Label>Skills</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                  />
+                  <Button type="button" onClick={addSkill}>
+                    Add
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.skills.map((skill) => (
+                    <Badge key={skill} onClick={() => removeSkill(skill)}>
+                      {skill} ×
+                    </Badge>
+                  ))}
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label>Portfolio Links (optional)</Label>
-            <Input
-              placeholder="GitHub, Figma, personal website"
-              value={portfolio}
-              onChange={(e) => setPortfolio(e.target.value)}
-            />
-          </div>
-
-          <Button
-            className="w-full"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? "Saving profile..." : "Finish setup"}
-          </Button>
-        </CardContent>
-      </Card>
+              <div className="flex gap-4">
+                <Button onClick={handleSave}>Save</Button>
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
