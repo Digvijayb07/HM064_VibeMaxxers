@@ -40,20 +40,13 @@ export default function FreelancerProjectsPage() {
   useEffect(() => {
     const fetchProjects = async () => {
       const supabase = createClient();
-
-      // Fetch all open projects from any company
-      const { data: projectsData, error } = await supabase
+      const { data } = await supabase
         .from("projects")
         .select("*")
         .eq("status", "open")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching projects:", error);
-      } else if (projectsData) {
-        setProjects(projectsData);
-      }
-
+      if (data) setProjects(data);
       setIsLoading(false);
     };
 
@@ -68,10 +61,9 @@ export default function FreelancerProjectsPage() {
       const matchesSearch =
         project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (project.skills_req &&
-          project.skills_req.some((skill: string) =>
-            skill.toLowerCase().includes(searchQuery.toLowerCase()),
-          ));
+        project.skills_req?.some((s) =>
+          s.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
 
       const matchesCategory =
         !selectedCategory || project.category === selectedCategory;
@@ -82,271 +74,132 @@ export default function FreelancerProjectsPage() {
     });
   }, [projects, searchQuery, selectedCategory, selectedLevel]);
 
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      web: "bg-blue-50 text-blue-700 border-blue-200",
-      mobile: "bg-purple-50 text-purple-700 border-purple-200",
-      design: "bg-orange-50 text-orange-700 border-orange-200",
-      other: "bg-gray-50 text-gray-700 border-gray-200",
-    };
-    return colors[category] || colors.other;
-  };
+  const categoryStyle = (c: string) =>
+    c === "web"
+      ? "bg-blue-500/15 text-blue-700"
+      : c === "mobile"
+      ? "bg-purple-500/15 text-purple-700"
+      : c === "design"
+      ? "bg-orange-500/15 text-orange-700"
+      : "bg-gray-500/15 text-gray-700";
 
-  const getLevelColor = (level: string) => {
-    const colors: Record<string, string> = {
-      beginner: "bg-green-50 text-green-700 border-green-200",
-      intermediate: "bg-yellow-50 text-yellow-700 border-yellow-200",
-      advanced: "bg-red-50 text-red-700 border-red-200",
-    };
-    return colors[level] || colors.beginner;
-  };
+  const levelStyle = (l: string) =>
+    l === "beginner"
+      ? "bg-emerald-500/20 text-emerald-700"
+      : l === "intermediate"
+      ? "bg-yellow-500/20 text-yellow-700"
+      : "bg-red-500/20 text-red-700";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-                T
-              </div>
-              <h1 className="text-xl font-bold text-foreground">TalentHub</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center">
+              T
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/freelancer/dashboard">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground">
-                  Dashboard
-                </Button>
-              </Link>
-              <Link href="/freelancer/applications">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground">
-                  My Applications
-                </Button>
-              </Link>
-            </div>
+            <span className="font-bold text-lg">TalentHub</span>
+          </div>
+          <div className="flex gap-3">
+            <Link href="/freelancer/dashboard">
+              <Button variant="ghost">Dashboard</Button>
+            </Link>
+            <Link href="/freelancer/applications">
+              <Button variant="ghost">Applications</Button>
+            </Link>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Page Title */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground">
-            Browse Projects
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Find and apply to projects that match your skills
+      <main className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+        <div>
+          <h1 className="text-3xl font-bold">Browse Projects</h1>
+          <p className="text-muted-foreground mt-1">
+            Find work that fits your skills and experience
           </p>
         </div>
 
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
+        <div className="space-y-6">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search by title, skills, or company..."
+              className="pl-10"
+              placeholder="Search by title, skills, or description"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Category Filter */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div>
-              <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Category
+              <p className="font-semibold mb-3 flex items-center gap-2">
+                <Filter size={14} /> Category
               </p>
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant={selectedCategory === null ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedCategory(null)}
-                  className={
-                    selectedCategory === null
-                      ? "bg-primary hover:bg-primary/90"
-                      : ""
-                  }>
+                  variant={!selectedCategory ? "default" : "outline"}
+                  className={!selectedCategory ? "bg-indigo-500" : ""}
+                  onClick={() => setSelectedCategory(null)}>
                   All
                 </Button>
-                {categories.map((cat) => (
+                {categories.map((c) => (
                   <Button
-                    key={cat}
-                    variant={selectedCategory === cat ? "default" : "outline"}
+                    key={c}
                     size="sm"
-                    onClick={() => setSelectedCategory(cat)}
+                    variant={selectedCategory === c ? "default" : "outline"}
                     className={
-                      selectedCategory === cat
-                        ? "bg-primary hover:bg-primary/90"
-                        : ""
-                    }>
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      selectedCategory === c ? "bg-indigo-500" : ""
+                    }
+                    onClick={() => setSelectedCategory(c)}>
+                    {c}
                   </Button>
                 ))}
               </div>
             </div>
 
-            {/* Level Filter */}
             <div>
-              <p className="text-sm font-semibold text-foreground mb-3">
-                Experience Level
-              </p>
+              <p className="font-semibold mb-3">Experience</p>
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant={selectedLevel === null ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setSelectedLevel(null)}
-                  className={
-                    selectedLevel === null
-                      ? "bg-primary hover:bg-primary/90"
-                      : ""
-                  }>
+                  variant={!selectedLevel ? "default" : "outline"}
+                  className={!selectedLevel ? "bg-indigo-500" : ""}
+                  onClick={() => setSelectedLevel(null)}>
                   All
                 </Button>
-                {levels.map((level) => (
+                {levels.map((l) => (
                   <Button
-                    key={level}
-                    variant={selectedLevel === level ? "default" : "outline"}
+                    key={l}
                     size="sm"
-                    onClick={() => setSelectedLevel(level)}
-                    className={
-                      selectedLevel === level
-                        ? "bg-primary hover:bg-primary/90"
-                        : ""
-                    }>
-                    {level.charAt(0).toUpperCase() + level.slice(1)}
+                    variant={selectedLevel === l ? "default" : "outline"}
+                    className={selectedLevel === l ? "bg-indigo-500" : ""}
+                    onClick={() => setSelectedLevel(l)}>
+                    {l}
                   </Button>
                 ))}
               </div>
             </div>
 
-            {/* Results Count */}
             <div className="flex items-end">
               <p className="text-sm text-muted-foreground">
                 Showing{" "}
-                <span className="font-semibold">{filteredProjects.length}</span>{" "}
-                of <span className="font-semibold">{projects.length}</span>{" "}
-                projects
+                <span className="font-semibold">
+                  {filteredProjects.length}
+                </span>{" "}
+                of <span className="font-semibold">{projects.length}</span>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Project Grid */}
         {isLoading ? (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">Loading projects...</p>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {filteredProjects.map((project: Project) => (
-              <Link
-                key={project.id}
-                href={`/freelancer/projects/${project.id}`}>
-                <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer h-full flex flex-col">
-                  <div className="mb-4 flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground">
-                        {project.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Company Project
-                      </p>
-                    </div>
-                    <Badge
-                      className={`${getCategoryColor(project.category)} capitalize`}>
-                      {project.category}
-                    </Badge>
-                  </div>
-
-                  <p className="text-sm text-foreground mb-4 flex-1 line-clamp-2">
-                    {project.description}
-                  </p>
-
-                  {/* Skills */}
-                  <div className="mb-4">
-                    <div className="flex flex-wrap gap-2">
-                      {project.skills_req &&
-                        project.skills_req.slice(0, 3).map((skill: string) => (
-                          <Badge
-                            key={skill}
-                            variant="secondary"
-                            className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      {project.skills_req && project.skills_req.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{project.skills_req.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Info Row */}
-                  <div className="mb-4 grid grid-cols-2 gap-4 py-4 border-t border-b border-border">
-                    <div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        Budget
-                      </p>
-                      <p className="text-sm font-bold text-foreground">
-                        ${project.budget.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        Duration
-                      </p>
-                      <p className="text-sm font-bold text-foreground">
-                        {project.duration}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        className={`${getLevelColor(project.exp_level)} capitalize text-xs`}>
-                        {project.exp_level}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3 w-3" />0 applied
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-primary hover:text-primary/90"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        // Will navigate via Link
-                      }}>
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {!isLoading && filteredProjects.length === 0 && (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground">
-              No projects found matching your filters.
-            </p>
+          <Card className="p-12 text-center">Loading projects…</Card>
+        ) : filteredProjects.length === 0 ? (
+          <Card className="p-12 text-center space-y-3">
+            <p className="text-muted-foreground">No projects found</p>
             <Button
               variant="outline"
-              className="mt-4 bg-transparent"
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory(null);
@@ -355,8 +208,74 @@ export default function FreelancerProjectsPage() {
               Clear Filters
             </Button>
           </Card>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {filteredProjects.map((p) => (
+              <Link key={p.id} href={`/freelancer/projects/${p.id}`}>
+                <Card className="p-6 h-full flex flex-col hover:shadow-xl transition border-l-4 border-indigo-500">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h3 className="text-lg font-bold">{p.title}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Company Project
+                      </p>
+                    </div>
+                    <Badge className={categoryStyle(p.category)}>
+                      {p.category}
+                    </Badge>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
+                    {p.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {p.skills_req?.slice(0, 3).map((s) => (
+                      <Badge key={s} variant="secondary">
+                        {s}
+                      </Badge>
+                    ))}
+                    {p.skills_req?.length > 3 && (
+                      <Badge variant="secondary">
+                        +{p.skills_req.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 py-4 border-y text-sm">
+                    <div>
+                      <p className="text-muted-foreground flex items-center gap-1">
+                        <DollarSign size={14} /> Budget
+                      </p>
+                      <p className="font-semibold">
+                        ${p.budget.toLocaleString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground flex items-center gap-1">
+                        <Clock size={14} /> Duration
+                      </p>
+                      <p className="font-semibold">{p.duration}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className={levelStyle(p.exp_level)}>
+                        {p.exp_level}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Users size={12} />0 applied
+                      </span>
+                    </div>
+                    <ChevronRight className="text-indigo-500" />
+                  </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,149 +1,112 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { login } from "@/lib/auth-actions";
+import { motion } from "framer-motion";
+import { FolderKanban } from "lucide-react";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 import SignInWithGoogleButton from "./SignInWithGoogleButton";
-import { useState, FormEvent, ChangeEvent } from "react";
-import { supabase } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+import SignInWithGithubButton from "./SignInWithGithubButton";
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"div">) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const { data, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-      if (signInError) {
-        console.error("Login error:", signInError);
-        setError(signInError.message);
-        setLoading(false);
-        return;
-      }
-
-      // Check user role and redirect to appropriate dashboard
-      if (data.user) {
-        const { data: userData } = await supabase
-          .from("users")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .single();
-
-        if (userData?.role) {
-          const redirectPath =
-            userData.role === "company"
-              ? "/company/dashboard"
-              : "/freelancer/dashboard";
-          router.push(redirectPath);
-        } else {
-          // User exists in auth but not in users table - should not happen
-          setError("Account setup incomplete. Please contact support.");
-          setLoading(false);
-        }
-      }
-    } catch (err) {
-      setError("An unexpected error occurred");
-      setLoading(false);
-    }
-  };
-
+export default function AuthPage() {
   return (
-    <Card className={cn("shadow-lg w-full mx-auto", className)} {...props}>
-      <CardContent className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex flex-col items-center gap-2 text-center mb-6">
-            <h1 className="text-2xl font-bold">Welcome back</h1>
-            <p className="text-muted-foreground text-sm">
-              Login to your Attendance Analyser account
+    <div className="min-h-screen flex">
+      {/* LEFT — AUTH */}
+      <div className="flex flex-1 items-center justify-center px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md space-y-8"
+        >
+          {/* Logo */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-soft">
+              <FolderKanban className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-semibold tracking-tight">
+              TalentHub
+            </span>
+          </div>
+
+          {/* Header */}
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-muted-foreground">
+              Continue with Google or GitHub to get started
             </p>
           </div>
 
-          {error && (
-            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mb-4">
-              {error}
-            </div>
-          )}
+          {/* Auth Card */}
+          <Card className="shadow-soft-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium">
+                Sign in to TalentHub
+              </CardTitle>
+              <CardDescription>
+                We’ll guide you through setup after login
+              </CardDescription>
+            </CardHeader>
 
-          <div className="space-y-4">
+            <CardContent className="space-y-4">
+              <SignInWithGoogleButton />
+              <SignInWithGithubButton />
+
+              <p className="text-xs text-center text-muted-foreground">
+                No signup forms. No passwords. Secure OAuth only.
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+
+      {/* RIGHT — MARKETING */}
+      <div className="hidden lg:flex flex-1 items-center justify-center gradient-primary px-12">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="max-w-md text-white space-y-6"
+        >
+          <h2 className="text-3xl font-semibold leading-tight">
+            Connect talent <br /> with opportunity
+          </h2>
+
+          <p className="text-white/80 text-lg">
+            TalentHub helps companies collaborate with skilled developers
+            through transparent, project-based workflows.
+          </p>
+
+          <div className="flex items-center gap-6 pt-4">
             <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="m@example.com"
-                required
-                className="mt-1"
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setEmail(e.target.value)
-                }
-              />
+              <p className="text-3xl font-bold">500+</p>
+              <p className="text-sm text-white/70">Projects Posted</p>
             </div>
+
+            <div className="w-px h-12 bg-white/20" />
+
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
-                  className="text-sm text-muted-foreground hover:underline">
-                  Forgot password?
-                </a>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="mt-1"
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setPassword(e.target.value)
-                }
-              />
+              <p className="text-3xl font-bold">2.5k+</p>
+              <p className="text-sm text-white/70">Developers</p>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : "Login"}
-            </Button>
-          </div>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
+            <div className="w-px h-12 bg-white/20" />
+
+            <div>
+              <p className="text-3xl font-bold">98%</p>
+              <p className="text-sm text-white/70">Success Rate</p>
             </div>
           </div>
-
-          <SignInWithGoogleButton />
-
-          <div className="text-center text-sm text-muted-foreground mt-6">
-            Don&apos;t have an account?{" "}
-            <a href="/signup" className="underline hover:text-foreground">
-              Sign up
-            </a>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+        </motion.div>
+      </div>
+    </div>
   );
 }

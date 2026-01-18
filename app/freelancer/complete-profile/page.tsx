@@ -36,7 +36,6 @@ export default function CompleteProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Form state
   const [professionalTitle, setProfessionalTitle] = useState("");
   const [about, setAbout] = useState("");
   const [hourlyRate, setHourlyRate] = useState("");
@@ -124,9 +123,7 @@ export default function CompleteProfilePage() {
       formData.append("hourly_rate", hourlyRate);
       formData.append("availability", availability);
       formData.append("skills", JSON.stringify(skills));
-
       await createFreelancerProfile(formData);
-      // Redirect is handled by the server action
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create profile");
       setIsLoading(false);
@@ -137,280 +134,182 @@ export default function CompleteProfilePage() {
     switch (currentStep) {
       case 1:
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Professional Title</Label>
-              <Input
-                id="title"
-                placeholder="e.g., Full-Stack Developer, UI/UX Designer"
-                value={professionalTitle}
-                onChange={(e) => setProfessionalTitle(e.target.value)}
-                disabled={isLoading}
-                maxLength={100}
-              />
-              <p className="text-sm text-muted-foreground">
-                This will be displayed on your profile and in project listings
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label>Professional Title</Label>
+            <Input
+              value={professionalTitle}
+              onChange={(e) => setProfessionalTitle(e.target.value)}
+              placeholder="Full-Stack Developer"
+              disabled={isLoading}
+            />
           </div>
         );
-
       case 2:
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="about">About You</Label>
-              <textarea
-                id="about"
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Tell companies about your experience, expertise, and what makes you stand out..."
-                value={about}
-                onChange={(e) => setAbout(e.target.value)}
-                disabled={isLoading}
-                maxLength={1000}
-              />
-              <p className="text-sm text-muted-foreground">
-                {about.length}/1000 characters (minimum 50 characters)
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label>About You</Label>
+            <textarea
+              className="min-h-[130px] w-full rounded-lg border bg-background p-3 text-sm focus:ring-2 focus:ring-indigo-500"
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              disabled={isLoading}
+            />
+            <p className="text-xs text-muted-foreground">
+              {about.length}/1000 characters
+            </p>
           </div>
         );
-
       case 3:
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="rate">Hourly Rate (USD)</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  id="rate"
-                  type="number"
-                  placeholder="50"
-                  value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                  disabled={isLoading}
-                  min="1"
-                  step="1"
-                  className="pl-7"
-                />
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Set a competitive rate based on your experience and skills
-              </p>
+          <div className="space-y-2">
+            <Label>Hourly Rate</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
+              <Input
+                className="pl-7"
+                type="number"
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
+                disabled={isLoading}
+              />
             </div>
           </div>
         );
-
       case 4:
         return (
-          <div className="space-y-4">
-            <div className="space-y-3">
-              <Label>Availability</Label>
-              <div className="grid gap-3">
-                {[
-                  {
-                    value: "available" as const,
-                    label: "Available",
-                    description: "Ready to take on new projects immediately",
-                  },
-                  {
-                    value: "available-limited" as const,
-                    label: "Limited Availability",
-                    description: "Can take on projects with some constraints",
-                  },
-                  {
-                    value: "unavailable" as const,
-                    label: "Unavailable",
-                    description: "Not looking for new projects right now",
-                  },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setAvailability(option.value)}
-                    disabled={isLoading}
-                    className={`relative flex flex-col items-start gap-1 p-4 rounded-lg border-2 transition-all text-left ${
-                      availability === option.value
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50"
-                    }`}>
-                    {availability === option.value && (
-                      <div className="absolute top-3 right-3">
-                        <Check className="h-5 w-5 text-primary" />
-                      </div>
-                    )}
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {option.description}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="grid gap-3">
+            {[
+              { value: "available", label: "Available" },
+              { value: "available-limited", label: "Limited Availability" },
+              { value: "unavailable", label: "Unavailable" },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setAvailability(opt.value as any)}
+                className={`p-4 rounded-xl border text-left transition ${
+                  availability === opt.value
+                    ? "border-indigo-500 bg-indigo-500/10"
+                    : "hover:border-indigo-300"
+                }`}>
+                <div className="font-medium">{opt.label}</div>
+              </button>
+            ))}
           </div>
         );
-
       case 5:
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="skills">Skills</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="skills"
-                  placeholder="e.g., React, TypeScript, Node.js"
-                  value={skillInput}
-                  onChange={(e) => setSkillInput(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddSkill();
-                    }
-                  }}
-                  disabled={isLoading}
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddSkill}
-                  disabled={isLoading || !skillInput.trim()}
-                  variant="outline">
-                  Add
-                </Button>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Add skills one at a time. Press Enter or click Add.
-              </p>
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddSkill();
+                  }
+                }}
+                disabled={isLoading}
+              />
+              <Button variant="outline" onClick={handleAddSkill}>
+                Add
+              </Button>
             </div>
-
-            {skills.length > 0 && (
-              <div className="space-y-2">
-                <Label>Your Skills ({skills.length})</Label>
-                <div className="flex flex-wrap gap-2">
-                  {skills.map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant="secondary"
-                      className="px-3 py-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => handleRemoveSkill(skill)}>
-                      {skill}
-                      <span className="ml-2">×</span>
-                    </Badge>
-                  ))}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Click on a skill to remove it
-                </p>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {skills.map((skill) => (
+                <Badge
+                  key={skill}
+                  className="cursor-pointer bg-indigo-500/15 text-indigo-700 hover:bg-red-500/20 hover:text-red-700"
+                  onClick={() => handleRemoveSkill(skill)}>
+                  {skill} ×
+                </Badge>
+              ))}
+            </div>
           </div>
         );
-
-      default:
-        return null;
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="mx-auto max-w-2xl shadow-lg w-full">
-        <CardHeader className="px-8 pt-8 pb-6">
-          <div className="space-y-4">
-            {/* Progress indicator */}
-            <div className="flex items-center justify-between mb-6">
-              {steps.map((step) => (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 px-4">
+      <Card className="max-w-2xl w-full shadow-xl border-0">
+        <CardHeader className="pb-4">
+          <div className="flex justify-between mb-6">
+            {steps.map((s) => (
+              <div key={s.id} className="flex-1 flex flex-col items-center">
                 <div
-                  key={step.id}
-                  className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                      step.id < currentStep
-                        ? "bg-primary text-primary-foreground"
-                        : step.id === currentStep
-                          ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
-                          : "bg-muted text-muted-foreground"
-                    }`}>
-                    {step.id < currentStep ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      step.id
-                    )}
-                  </div>
-                  {step.id < steps.length && (
-                    <div
-                      className={`h-1 w-full transition-colors ${
-                        step.id < currentStep ? "bg-primary" : "bg-muted"
-                      }`}
-                    />
-                  )}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    s.id <= currentStep
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                      : "bg-muted"
+                  }`}>
+                  {s.id < currentStep ? <Check size={14} /> : s.id}
                 </div>
-              ))}
-            </div>
-
-            <div>
-              <CardTitle className="text-2xl">
-                {steps[currentStep - 1].title}
-              </CardTitle>
-              <CardDescription className="mt-2">
-                {steps[currentStep - 1].description}
-              </CardDescription>
-            </div>
+                {s.id < steps.length && (
+                  <div
+                    className={`h-1 w-full ${
+                      s.id < currentStep ? "bg-indigo-500" : "bg-muted"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
           </div>
+
+          <CardTitle className="text-2xl">
+            {steps[currentStep - 1].title}
+          </CardTitle>
+          <CardDescription>
+            {steps[currentStep - 1].description}
+          </CardDescription>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8">
-          <div className="space-y-6">
-            {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                {error}
-              </div>
-            )}
-
-            {renderStepContent()}
-
-            {/* Navigation buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleBack}
-                disabled={currentStep === 1 || isLoading}
-                className="flex-1">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-
-              {currentStep < steps.length ? (
-                <Button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!canProceed() || isLoading}
-                  className="flex-1">
-                  Next
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={!canProceed() || isLoading}
-                  className="flex-1">
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating Profile...
-                    </>
-                  ) : (
-                    <>
-                      Complete Profile
-                      <Check className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              )}
+        <CardContent className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-lg text-sm bg-red-50 text-red-700 border border-red-200">
+              {error}
             </div>
+          )}
+
+          {renderStepContent()}
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={currentStep === 1 || isLoading}
+              className="flex-1">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back
+            </Button>
+
+            {currentStep < steps.length ? (
+              <Button
+                onClick={handleNext}
+                disabled={!canProceed() || isLoading}
+                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                Next
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={!canProceed() || isLoading}
+                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    Complete Profile
+                    <Check className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -44,10 +44,7 @@ interface ProjectWithApplications extends Project {
 
 export default function CompanyDashboardPage() {
   const [projects, setProjects] = useState<ProjectWithApplications[]>([]);
-  const [userData, setUserData] = useState<{
-    name: string;
-    email: string;
-  } | null>(null);
+  const [userData, setUserData] = useState<{ name: string; email: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
@@ -64,28 +61,21 @@ export default function CompanyDashboardPage() {
       } = await supabase.auth.getUser();
 
       if (user) {
-        // Fetch user data
         const { data: userDataResult } = await supabase
           .from("users")
           .select("name, email")
           .eq("user_id", user.id)
           .single();
 
-        if (userDataResult) {
-          setUserData(userDataResult);
-        }
+        if (userDataResult) setUserData(userDataResult);
 
-        // Fetch user's projects
-        const { data: projectsData, error } = await supabase
+        const { data: projectsData } = await supabase
           .from("projects")
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error("Error fetching projects:", error);
-        } else if (projectsData) {
-          // Fetch application counts for each project
+        if (projectsData) {
           const projectIds = projectsData.map((p) => p.id);
 
           const { data: applicationsData } = await supabase
@@ -93,32 +83,23 @@ export default function CompanyDashboardPage() {
             .select("project_id")
             .in("project_id", projectIds);
 
-          // Count applications per project
-          const applicationCounts: Record<number, number> = {};
-          applicationsData?.forEach((app) => {
-            applicationCounts[app.project_id] =
-              (applicationCounts[app.project_id] || 0) + 1;
+          const counts: Record<number, number> = {};
+          applicationsData?.forEach((a) => {
+            counts[a.project_id] = (counts[a.project_id] || 0) + 1;
           });
 
-          // Add application counts to projects
-          const projectsWithCounts = projectsData.map((project) => ({
-            ...project,
-            applicantCount: applicationCounts[project.id] || 0,
+          const enriched = projectsData.map((p) => ({
+            ...p,
+            applicantCount: counts[p.id] || 0,
           }));
 
-          setProjects(projectsWithCounts);
+          setProjects(enriched);
 
-          // Calculate stats
-          const totalApplications = applicationsData?.length || 0;
           setStats({
             totalProjects: projectsData.length,
-            activeProjects: projectsData.filter((p) => p.status === "open")
-              .length,
-            totalApplications,
-            totalSpent: projectsData.reduce(
-              (sum, p) => sum + (p.budget || 0),
-              0,
-            ),
+            activeProjects: projectsData.filter((p) => p.status === "open").length,
+            totalApplications: applicationsData?.length || 0,
+            totalSpent: projectsData.reduce((sum, p) => sum + (p.budget || 0), 0),
           });
         }
       }
@@ -129,209 +110,135 @@ export default function CompanyDashboardPage() {
     fetchData();
   }, []);
 
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      open: "bg-green-50 text-green-700 border-green-200",
-      "in-progress": "bg-blue-50 text-blue-700 border-blue-200",
-      completed: "bg-gray-50 text-gray-700 border-gray-200",
-    };
-    return colors[status] || colors.open;
-  };
+  const statusColor = (status: string) =>
+    status === "open"
+      ? "bg-emerald-500/20 text-emerald-700"
+      : status === "in-progress"
+      ? "bg-blue-500/20 text-blue-700"
+      : "bg-gray-500/20 text-gray-700";
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card sticky top-0 z-50">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-                T
-              </div>
-              <h1 className="text-xl font-bold text-foreground">TalentHub</h1>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center">
+              T
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/company/projects">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground">
-                  Projects
-                </Button>
-              </Link>
-              <Link href="/company/applications">
-                <Button
-                  variant="ghost"
-                  className="text-muted-foreground hover:text-foreground">
-                  Applications
-                </Button>
-              </Link>
-              <div className="flex items-center gap-3 ml-2 pl-4 border-l border-border">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
-                  {userData ? (
-                    userData.name.charAt(0).toUpperCase()
-                  ) : (
-                    <User className="h-5 w-5" />
-                  )}
-                </div>
-                {userData && (
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-foreground">
-                      {userData.name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {userData.email}
-                    </span>
-                  </div>
-                )}
-                <form action={signout}>
-                  <Button
-                    type="submit"
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-foreground flex items-center gap-2">
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
-                </form>
+            <span className="font-bold text-lg">TalentHub</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link href="/company/projects">
+              <Button variant="ghost">Projects</Button>
+            </Link>
+            <Link href="/company/applications">
+              <Button variant="ghost">Applications</Button>
+            </Link>
+
+            <div className="flex items-center gap-3 pl-4 border-l">
+              <div className="h-9 w-9 rounded-full bg-indigo-500/15 text-indigo-700 flex items-center justify-center font-semibold">
+                {userData?.name?.[0]?.toUpperCase() || <User size={18} />}
               </div>
+              {userData && (
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium">{userData.name}</p>
+                  <p className="text-xs text-muted-foreground">{userData.email}</p>
+                </div>
+              )}
+              <form action={signout}>
+                <Button variant="ghost" size="sm">
+                  <LogOut size={16} />
+                </Button>
+              </form>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Page Title */}
-        <div className="mb-8 flex items-center justify-between">
+      <main className="max-w-7xl mx-auto px-4 py-10 space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">
-              Company Dashboard
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Manage your projects and find talented professionals
+            <h1 className="text-3xl font-bold">Company Dashboard</h1>
+            <p className="text-muted-foreground mt-1">
+              Manage projects and track applicants
             </p>
           </div>
           <Link href="/company/create-project">
-            <Button className="bg-primary hover:bg-primary/90 flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+            <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+              <Plus className="mr-2 h-4 w-4" />
               Post Project
             </Button>
           </Link>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Projects</p>
-                <p className="text-3xl font-bold text-foreground mt-2">
-                  {stats.totalProjects}
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "Total Projects", value: stats.totalProjects, icon: Briefcase },
+            { label: "Active Projects", value: stats.activeProjects, icon: Clock },
+            { label: "Applications", value: stats.totalApplications, icon: Users },
+            { label: "Total Budget", value: `$${stats.totalSpent.toLocaleString()}`, icon: TrendingUp },
+          ].map((s) => (
+            <Card key={s.label} className="p-6 shadow-sm hover:shadow-md transition">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">{s.label}</p>
+                  <p className="text-3xl font-bold mt-2">{s.value}</p>
+                </div>
+                <s.icon className="h-8 w-8 text-indigo-500/60" />
               </div>
-              <Briefcase className="h-8 w-8 text-primary opacity-50" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Now</p>
-                <p className="text-3xl font-bold text-foreground mt-2">
-                  {stats.activeProjects}
-                </p>
-              </div>
-              <Clock className="h-8 w-8 text-accent opacity-50" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Applications</p>
-                <p className="text-3xl font-bold text-foreground mt-2">
-                  {stats.totalApplications}
-                </p>
-              </div>
-              <Users className="h-8 w-8 text-primary opacity-50" />
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Total Budget Used
-                </p>
-                <p className="text-3xl font-bold text-foreground mt-2">
-                  ${stats.totalSpent.toLocaleString()}
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-accent opacity-50" />
-            </div>
-          </Card>
+            </Card>
+          ))}
         </div>
 
-        {/* Recent Projects */}
         <div>
-          <h3 className="text-xl font-bold text-foreground mb-4">
-            Recent Projects
-          </h3>
+          <h2 className="text-xl font-bold mb-4">Recent Projects</h2>
+
           {isLoading ? (
-            <Card className="p-8 text-center">
-              <p className="text-muted-foreground">Loading projects...</p>
+            <Card className="p-10 text-center text-muted-foreground">
+              Loading projects…
             </Card>
           ) : projects.length === 0 ? (
-            <Card className="p-8 text-center">
+            <Card className="p-10 text-center">
               <p className="text-muted-foreground mb-4">No projects yet</p>
               <Link href="/company/create-project">
                 <Button>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Create Your First Project
                 </Button>
               </Link>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-4">
               {projects.map((project) => (
                 <Link key={project.id} href={`/company/projects/${project.id}`}>
-                  <Card className="p-6 hover:shadow-lg hover:border-primary transition-all cursor-pointer">
-                    <div className="flex items-start justify-between mb-4">
+                  <Card className="p-6 hover:shadow-xl transition border-l-4 border-indigo-500 cursor-pointer">
+                    <div className="flex justify-between gap-4">
                       <div>
-                        <h4 className="font-semibold text-foreground">
-                          {project.title}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {project.description.substring(0, 100)}...
+                        <h3 className="font-semibold text-lg">{project.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                          {project.description}
                         </p>
                       </div>
-                      <Badge
-                        className={`${getStatusColor(project.status)} capitalize`}>
+                      <Badge className={statusColor(project.status)}>
                         {project.status}
                       </Badge>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4 py-4 border-t border-border">
+                    <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t text-sm">
                       <div>
-                        <p className="text-xs text-muted-foreground">Budget</p>
-                        <p className="text-sm font-bold text-foreground">
+                        <p className="text-muted-foreground">Budget</p>
+                        <p className="font-semibold">
                           ${project.budget.toLocaleString()}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">
-                          Applications
-                        </p>
-                        <p className="text-sm font-bold text-foreground">
-                          {project.applicantCount}
-                        </p>
+                        <p className="text-muted-foreground">Applications</p>
+                        <p className="font-semibold">{project.applicantCount}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">
-                          Deadline
-                        </p>
-                        <p className="text-sm font-bold text-foreground">
-                          {project.deadline}
-                        </p>
+                        <p className="text-muted-foreground">Deadline</p>
+                        <p className="font-semibold">{project.deadline}</p>
                       </div>
                     </div>
 
@@ -349,7 +256,7 @@ export default function CompanyDashboardPage() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }

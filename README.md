@@ -1,30 +1,89 @@
-# Talent marketplace frontend
+**[HM064] [VibeMaxxers]**  
+# **TALENTHUB – Project-Based Collaboration Platform**
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+---
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/vedantmuglikar1-1616s-projects/v0-talent-marketplace-frontend)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/gmdf2MGSEXJ)
+## **📌 Purpose of the Website**
 
-## Overview
+**TalentHub** is a project-based collaboration platform that connects **companies** with **developers** through transparent, skill-driven workflows. Instead of traditional hiring, companies post real projects and developers compete by submitting proposals and solutions.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+### **How It Works?**
+- Companies create projects with clear requirements, tech stack, budget, and deadlines.  
+- Developers browse projects and submit proposals with portfolio links.  
+- Companies shortlist or reject applicants transparently.  
+- Shortlisted developers submit project solutions.  
+- One winner is selected per project, while other shortlisted developers receive participation acknowledgment.  
 
-## Deployment
+### **How It Helps Institutions / Organizations?**
+- Promotes **project-based hiring** over resume screening.  
+- Ensures **fair evaluation** based on real work submissions.  
+- Helps organizations identify **practical, job-ready talent**.  
 
-Your project is live at:
+---
 
-**[https://vercel.com/vedantmuglikar1-1616s-projects/v0-talent-marketplace-frontend](https://vercel.com/vedantmuglikar1-1616s-projects/v0-talent-marketplace-frontend)**
+## **🌟 Features**
 
-## Build your app
+✔ Role-based authentication (Company & Developer) using Google and GitHub OAuth  
+✔ Project posting with requirements, tech stack, budget, and deadlines  
+✔ Developer proposal submission with portfolio links  
+✔ Transparent shortlisting and rejection workflow  
+✔ Controlled submission access for shortlisted developers  
+✔ Single winner selection per project  
+✔ Participation acknowledgment for non-winning shortlisted developers  
+✔ AI-ready mock scoring for applicant ranking  
+✔ Real-time project-based messaging  
+✔ Fully responsive and modern UI  
 
-Continue building your app on:
+---
 
-**[https://v0.app/chat/gmdf2MGSEXJ](https://v0.app/chat/gmdf2MGSEXJ)**
+## **🌍 Deployed URL**
 
-## How It Works
+🔗 **Live Platform:** *(Add deployment link here)*  
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+---
+
+## **🎥 Demo Video**
+
+📽️ **Demo Video:** *(Add demo video link here)*  
+
+---
+
+## **🛠️ Tech Stack & APIs Used**
+
+- **Frontend:** Next.js (App Router), React, Tailwind CSS, Framer Motion  
+- **Backend:** Next.js Route Handlers  
+- **Database:** Supabase (PostgreSQL)  
+- **Authentication:** Supabase Auth (Google & GitHub OAuth)  
+- **Storage:** Supabase Storage  
+- **Validation:** Zod  
+- **AI Readiness:** Deterministic mock scoring with future AI integration hooks  
+
+---
+
+## **🧩 System Highlights**
+
+- Strict role-based access control using Supabase RLS  
+- Public project discovery with protected submissions  
+- Type-safe APIs and database schema  
+- Scalable, AI-ready backend architecture  
+
+---
+
+## **🚀 Upcoming Features**
+
+🔹 AI-powered proposal evaluation and recommendations  
+🔹 Automated shortlist suggestions  
+🔹 Submission similarity detection  
+🔹 Public developer portfolios  
+🔹 Organization and team collaboration features  
+
+---
+
+## **📖 How to Fork / Clone the Project**
+
+1. **Fork the Repository**  
+   Click the **Fork** button on GitHub.
+
+2. **Clone the Repository**
+   ```bash
+   git clone https://github.com/your-username/your-repo-name.git
