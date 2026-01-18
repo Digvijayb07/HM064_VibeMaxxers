@@ -108,7 +108,9 @@ export async function signup(formData: FormData) {
 
     // Redirect based on user role
     const redirectPath =
-      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+      userRole === "company"
+        ? "/company/dashboard"
+        : "/freelancer/complete-profile";
     redirect(redirectPath);
   } catch (error) {
     console.error("Signup error:", error);
@@ -188,7 +190,9 @@ export async function updateUserRole(userRole: "company" | "developer") {
 
     // Redirect based on user role
     const redirectPath =
-      userRole === "company" ? "/company/dashboard" : "/freelancer/dashboard";
+      userRole === "company"
+        ? "/company/dashboard"
+        : "/freelancer/complete-profile";
     redirect(redirectPath);
   } catch (error) {
     console.error("Update user role error:", error);
@@ -389,6 +393,106 @@ export async function applyToProject(projectId: number) {
     return { success: true, data };
   } catch (error) {
     console.error("Apply to project error:", error);
+    throw error;
+  }
+}
+
+export async function createFreelancerProfile(formData: FormData) {
+  try {
+    const supabase = await createClient();
+
+    // Get the current user
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error("Error getting user:", userError);
+      throw new Error("User not authenticated");
+    }
+
+    // Parse form data
+    const professionalTitle = formData.get("professional_title") as string;
+    const about = formData.get("about") as string;
+    const hourlyRateStr = formData.get("hourly_rate") as string;
+    const availability = formData.get("availability") as string;
+    const skillsStr = formData.get("skills") as string;
+
+    console.log("Creating freelancer profile with data:", {
+      user_id: user.id,
+      professional_title: professionalTitle,
+      hourly_rate: hourlyRateStr,
+      availability,
+      skills: skillsStr,
+    });
+
+    // Validate required fields
+    if (
+      !professionalTitle ||
+      !about ||
+      !hourlyRateStr ||
+      !availability ||
+      !skillsStr
+    ) {
+      throw new Error("Missing required fields");
+    }
+
+    // Validate and parse hourly rate
+    const hourlyRate = parseFloat(hourlyRateStr);
+    if (isNaN(hourlyRate) || hourlyRate <= 0) {
+      throw new Error("Hourly rate must be a valid positive number");
+    }
+
+    // Parse skills
+    const skills = JSON.parse(skillsStr);
+    if (!Array.isArray(skills) || skills.length === 0) {
+      throw new Error("At least one skill is required");
+    }
+
+    const profileData = {
+      user_id: user.id,
+      professional_title: professionalTitle,
+      about,
+      hr_rate: hourlyRate,
+      availability,
+      skills,
+    };
+
+    console.log("Inserting freelancer profile data:", profileData);
+
+    // Update the existing user record with profile information
+    const { data, error: updateError } = await supabase
+      .from("users")
+      .update({
+        professional_title: professionalTitle,
+        about,
+        hr_rate: hourlyRate,
+        availability,
+        skills,
+      })
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating user profile:", updateError);
+      console.error("Error details:", {
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+        code: updateError.code,
+      });
+      throw new Error(`Failed to create profile: ${updateError.message}`);
+    }
+
+    console.log("User profile updated successfully:", data);
+
+    revalidatePath("/freelancer/dashboard");
+    revalidatePath("/freelancer/profile");
+    redirect("/freelancer/dashboard");
+  } catch (error) {
+    console.error("Create freelancer profile error:", error);
     throw error;
   }
 }

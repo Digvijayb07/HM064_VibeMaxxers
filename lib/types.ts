@@ -31,6 +31,18 @@ export interface Application {
   submission_deadline?: string;
 }
 
+export interface FreelancerProfile {
+  id?: string;
+  user_id: string;
+  professional_title: string;
+  about: string;
+  hourly_rate: number;
+  availability: "available" | "available-limited" | "unavailable";
+  skills: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface SubmissionLink {
   type: 'figma' | 'drive' | 'github' | 'behance' | 'other';
   url: string;
@@ -121,5 +133,3 @@ export interface ProjectMessage {
   sent_at: string;
   created_at: string;
 }
-
-
