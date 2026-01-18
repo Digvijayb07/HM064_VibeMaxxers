@@ -38,13 +38,23 @@ interface DashboardStats {
   totalSpent: number;
 }
 
+interface ProjectWithApplications extends Project {
+  applicantCount: number;
+}
+
 export default function CompanyDashboardPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ProjectWithApplications[]>([]);
   const [userData, setUserData] = useState<{
     name: string;
     email: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalProjects: 0,
+    activeProjects: 0,
+    totalApplications: 0,
+    totalSpent: 0,
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +85,41 @@ export default function CompanyDashboardPage() {
         if (error) {
           console.error("Error fetching projects:", error);
         } else if (projectsData) {
-          setProjects(projectsData);
+          // Fetch application counts for each project
+          const projectIds = projectsData.map((p) => p.id);
+
+          const { data: applicationsData } = await supabase
+            .from("applications")
+            .select("project_id")
+            .in("project_id", projectIds);
+
+          // Count applications per project
+          const applicationCounts: Record<number, number> = {};
+          applicationsData?.forEach((app) => {
+            applicationCounts[app.project_id] =
+              (applicationCounts[app.project_id] || 0) + 1;
+          });
+
+          // Add application counts to projects
+          const projectsWithCounts = projectsData.map((project) => ({
+            ...project,
+            applicantCount: applicationCounts[project.id] || 0,
+          }));
+
+          setProjects(projectsWithCounts);
+
+          // Calculate stats
+          const totalApplications = applicationsData?.length || 0;
+          setStats({
+            totalProjects: projectsData.length,
+            activeProjects: projectsData.filter((p) => p.status === "open")
+              .length,
+            totalApplications,
+            totalSpent: projectsData.reduce(
+              (sum, p) => sum + (p.budget || 0),
+              0,
+            ),
+          });
         }
       }
 
@@ -84,13 +128,6 @@ export default function CompanyDashboardPage() {
 
     fetchData();
   }, []);
-
-  const stats: DashboardStats = {
-    totalProjects: projects.length,
-    activeProjects: projects.filter((p) => p.status === "open").length,
-    totalApplications: 0, // Will be calculated when we have applications data
-    totalSpent: projects.reduce((sum, p) => sum + (p.budget || 0), 0),
-  };
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
