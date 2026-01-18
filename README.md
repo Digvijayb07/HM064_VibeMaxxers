@@ -38,13 +38,13 @@
 
 ## **🌍 Deployed URL**
 
-🔗 **Live Platform:** *(Add deployment link here)*  
+🔗 **Live Platform:** (https://hm-064-vibe-maxxerss.vercel.app/) 
 
 ---
 
 ## **🎥 Demo Video**
 
-📽️ **Demo Video:** *(Add demo video link here)*  
+📽️ **Demo Video:** *(https://www.youtube.com/watch?v=ytZdWDv-_e4)*  
 
 ---
 
