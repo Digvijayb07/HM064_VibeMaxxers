@@ -56,9 +56,7 @@
 - **Authentication:** Supabase Auth (Google & GitHub OAuth)  
 - **Storage:** Supabase Storage  
 - **Validation:** Zod  
-- **AI Readiness:** Deterministic mock scoring with future AI integration hooks  
 
----
 
 ## **🧩 System Highlights**
 
@@ -86,4 +84,4 @@
 
 2. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/your-repo-name.git
+   git clone https://github.com/Digvijayb07/HM064_VibeMaxxers.git
