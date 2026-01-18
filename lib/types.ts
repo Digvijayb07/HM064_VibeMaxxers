@@ -29,3 +29,15 @@ export interface Application {
   status: "pending" | "accepted" | "rejected";
   submittedAt: string;
 }
+
+export interface FreelancerProfile {
+  id?: string;
+  user_id: string;
+  professional_title: string;
+  about: string;
+  hourly_rate: number;
+  availability: "available" | "available-limited" | "unavailable";
+  skills: string[];
+  created_at?: string;
+  updated_at?: string;
+}
