@@ -56,10 +56,10 @@ export default function SelectRolePage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="mx-auto max-w-lg shadow-lg w-full">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background bg-grid-pattern/5 p-4">
+      <Card className="mx-auto max-w-lg border border-border bg-card w-full card-telemetry">
         <CardHeader className="px-8 pt-8 pb-6">
-          <CardTitle className="text-2xl">Welcome! 🎉</CardTitle>
+          <CardTitle className="text-2xl font-sans tracking-tight">Welcome! 🎉</CardTitle>
           <CardDescription>
             To get started, please select your account type
           </CardDescription>
@@ -67,7 +67,7 @@ export default function SelectRolePage() {
         <CardContent className="px-8 pb-8">
           <div className="grid gap-6">
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              <div className="p-3 text-sm text-red-600 bg-red-500/5 border border-red-500/15 rounded-md font-mono">
                 {error}
               </div>
             )}
@@ -81,10 +81,10 @@ export default function SelectRolePage() {
                     onClick={() => setSelectedRole(role.id)}
                     disabled={isLoading}
                     className={cn(
-                      "relative flex flex-col items-center gap-3 p-6 rounded-lg border-2 transition-all text-left",
+                      "relative flex flex-col items-center gap-3 p-6 rounded-lg border transition-colors text-left cursor-pointer",
                       selectedRole === role.id
                         ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50",
+                        : "border-border bg-card hover:border-primary/50",
                       isLoading && "opacity-50 cursor-not-allowed",
                     )}>
                     {selectedRole === role.id && (
@@ -107,7 +107,7 @@ export default function SelectRolePage() {
                       />
                     </div>
                     <div className="text-center">
-                      <p className="font-semibold text-base">{role.label}</p>
+                      <p className="font-semibold text-base font-sans">{role.label}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {role.description}
                       </p>
@@ -119,13 +119,13 @@ export default function SelectRolePage() {
 
             <Button
               onClick={handleSubmit}
-              className="w-full"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary/95"
               disabled={!selectedRole || isLoading}
               size="lg">
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Setting up your account...
+                  Setting up your account…
                 </>
               ) : (
                 "Continue"

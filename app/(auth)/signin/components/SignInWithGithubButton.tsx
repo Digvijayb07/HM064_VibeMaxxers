@@ -32,7 +32,7 @@ export default function SignInWithGithubButton() {
       disabled={loading}
     >
       <Github className="h-4 w-4" />
-      {loading ? "Connecting..." : "Continue with GitHub"}
+      {loading ? "Connecting…" : "Continue with GitHub"}
     </Button>
   );
 }

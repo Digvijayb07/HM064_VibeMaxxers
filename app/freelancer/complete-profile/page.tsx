@@ -149,12 +149,12 @@ export default function CompleteProfilePage() {
           <div className="space-y-2">
             <Label>About You</Label>
             <textarea
-              className="min-h-[130px] w-full rounded-lg border bg-background p-3 text-sm focus:ring-2 focus:ring-indigo-500"
+              className="min-h-[130px] w-full rounded-md border border-input bg-card p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
               value={about}
               onChange={(e) => setAbout(e.target.value)}
               disabled={isLoading}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground font-mono">
               {about.length}/1000 characters
             </p>
           </div>
@@ -187,10 +187,10 @@ export default function CompleteProfilePage() {
                 key={opt.value}
                 type="button"
                 onClick={() => setAvailability(opt.value as any)}
-                className={`p-4 rounded-xl border text-left transition ${
+                className={`p-4 rounded-md border text-left transition-colors cursor-pointer ${
                   availability === opt.value
-                    ? "border-indigo-500 bg-indigo-500/10"
-                    : "hover:border-indigo-300"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "hover:border-primary/50 border-border bg-card"
                 }`}>
                 <div className="font-medium">{opt.label}</div>
               </button>
@@ -220,7 +220,8 @@ export default function CompleteProfilePage() {
               {skills.map((skill) => (
                 <Badge
                   key={skill}
-                  className="cursor-pointer bg-indigo-500/15 text-indigo-700 hover:bg-red-500/20 hover:text-red-700"
+                  variant="outline"
+                  className="cursor-pointer bg-primary/10 text-primary border-primary/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-colors font-mono"
                   onClick={() => handleRemoveSkill(skill)}>
                   {skill} ×
                 </Badge>
@@ -232,8 +233,8 @@ export default function CompleteProfilePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 px-4">
-      <Card className="max-w-2xl w-full shadow-xl border-0">
+    <div className="min-h-screen flex items-center justify-center bg-background bg-grid-pattern bg-blueprint-glow px-4 py-8">
+      <Card className="max-w-2xl w-full border border-border bg-card card-telemetry">
         <CardHeader className="pb-4">
           <div className="flex justify-between mb-6">
             {steps.map((s) => (
@@ -241,15 +242,15 @@ export default function CompleteProfilePage() {
                 <div
                   className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     s.id <= currentStep
-                      ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
-                      : "bg-muted"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}>
                   {s.id < currentStep ? <Check size={14} /> : s.id}
                 </div>
                 {s.id < steps.length && (
                   <div
-                    className={`h-1 w-full ${
-                      s.id < currentStep ? "bg-indigo-500" : "bg-muted"
+                    className={`h-1 w-full mt-1 ${
+                      s.id < currentStep ? "bg-primary" : "bg-muted"
                     }`}
                   />
                 )}
@@ -257,7 +258,7 @@ export default function CompleteProfilePage() {
             ))}
           </div>
 
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl font-sans tracking-tight">
             {steps[currentStep - 1].title}
           </CardTitle>
           <CardDescription>
@@ -288,7 +289,7 @@ export default function CompleteProfilePage() {
               <Button
                 onClick={handleNext}
                 disabled={!canProceed() || isLoading}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95">
                 Next
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -296,11 +297,11 @@ export default function CompleteProfilePage() {
               <Button
                 onClick={handleSubmit}
                 disabled={!canProceed() || isLoading}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    Creating…
                   </>
                 ) : (
                   <>

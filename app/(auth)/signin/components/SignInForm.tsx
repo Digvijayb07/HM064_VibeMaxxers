@@ -1,111 +1,101 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { FolderKanban } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { login } from "@/lib/auth-actions";
 import SignInWithGoogleButton from "./SignInWithGoogleButton";
 import SignInWithGithubButton from "./SignInWithGithubButton";
 
-export default function AuthPage() {
+export function SignInForm() {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await login(formData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to sign in");
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex">
-      {/* LEFT — AUTH */}
-      <div className="flex flex-1 items-center justify-center px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md space-y-8"
-        >
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-soft">
-              <FolderKanban className="h-5 w-5 text-white" />
+    <div className="grid gap-6">
+      <form action={handleSubmit}>
+        <div className="grid gap-4">
+          {error ? (
+            <div className="p-3 text-sm text-red-600 bg-red-50/5 border border-red-500/15 rounded-md font-mono">
+              {error === "Invalid credentials" ? "Invalid email or password" : error}
             </div>
-            <span className="text-xl font-semibold tracking-tight">
-              TalentHub
-            </span>
+          ) : null}
+
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              name="email"
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              disabled={isLoading}
+            />
           </div>
 
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Welcome back
-            </h1>
-            <p className="text-muted-foreground">
-              Continue with Google or GitHub to get started
-            </p>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+            </div>
+            <Input
+              name="password"
+              id="password"
+              type="password"
+              required
+              disabled={isLoading}
+            />
           </div>
 
-          {/* Auth Card */}
-          <Card className="shadow-soft-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">
-                Sign in to TalentHub
-              </CardTitle>
-              <CardDescription>
-                We’ll guide you through setup after login
-              </CardDescription>
-            </CardHeader>
+          <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing in…
+              </>
+            ) : (
+              "Sign In"
+            )}
+          </Button>
+        </div>
+      </form>
 
-            <CardContent className="space-y-4">
-              <SignInWithGoogleButton />
-              <SignInWithGithubButton />
-
-              <p className="text-xs text-center text-muted-foreground">
-                No signup forms. No passwords. Secure OAuth only.
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-card px-2 text-muted-foreground">
+            Or continue with
+          </span>
+        </div>
       </div>
 
-      {/* RIGHT — MARKETING */}
-      <div className="hidden lg:flex flex-1 items-center justify-center gradient-primary px-12">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="max-w-md text-white space-y-6"
-        >
-          <h2 className="text-3xl font-semibold leading-tight">
-            Connect talent <br /> with opportunity
-          </h2>
+      <div className="grid gap-3">
+        <SignInWithGoogleButton />
+        <SignInWithGithubButton />
+      </div>
 
-          <p className="text-white/80 text-lg">
-            TalentHub helps companies collaborate with skilled developers
-            through transparent, project-based workflows.
-          </p>
-
-          <div className="flex items-center gap-6 pt-4">
-            <div>
-              <p className="text-3xl font-bold">500+</p>
-              <p className="text-sm text-white/70">Projects Posted</p>
-            </div>
-
-            <div className="w-px h-12 bg-white/20" />
-
-            <div>
-              <p className="text-3xl font-bold">2.5k+</p>
-              <p className="text-sm text-white/70">Developers</p>
-            </div>
-
-            <div className="w-px h-12 bg-white/20" />
-
-            <div>
-              <p className="text-3xl font-bold">98%</p>
-              <p className="text-sm text-white/70">Success Rate</p>
-            </div>
-          </div>
-        </motion.div>
+      <div className="text-center text-sm text-gray-500">
+        Don't have an account?{" "}
+        <Link href="/signup" className="underline hover:text-primary transition-colors">
+          Sign up
+        </Link>
       </div>
     </div>
   );

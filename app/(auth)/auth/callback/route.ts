@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error("Error exchanging code for session:", error.message);
       return NextResponse.redirect(
-        `${origin}/login?error=${encodeURIComponent(error.message)}`,
+        `${origin}/signin?error=${encodeURIComponent(error.message)}`,
       );
     }
 
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 
   console.error("No authorization code received");
   return NextResponse.redirect(
-    `${origin}/login?error=${encodeURIComponent(
+    `${origin}/signin?error=${encodeURIComponent(
       error_description || "No authorization code received",
     )}`,
   );

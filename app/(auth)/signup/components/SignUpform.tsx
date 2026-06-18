@@ -57,9 +57,9 @@ export function SignUpForm() {
     },
   ];
   return (
-    <Card className="mx-auto max-w-lg shadow-lg">
+    <Card className="mx-auto max-w-lg border border-border bg-card card-telemetry">
       <CardHeader className="px-8 pt-8 pb-6">
-        <CardTitle className="text-xl">Sign Up</CardTitle>
+        <CardTitle className="text-xl font-sans tracking-tight">Sign Up</CardTitle>
         <CardDescription>
           Enter your information to create an account
         </CardDescription>
@@ -68,7 +68,7 @@ export function SignUpForm() {
         <form action={handleSubmit}>
           <div className="grid gap-6">
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+              <div className="p-3 text-sm text-red-600 bg-red-500/5 border border-red-500/15 rounded-md font-mono">
                 {error}
               </div>
             )}
@@ -82,10 +82,10 @@ export function SignUpForm() {
                     type="button"
                     onClick={() => setSelectedRole(role.id)}
                     className={cn(
-                      "relative flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all text-left",
+                      "relative flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors text-left cursor-pointer",
                       selectedRole === role.id
                         ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/50",
+                        : "border-border bg-card hover:border-primary/50",
                     )}>
                     {selectedRole === role.id && (
                       <div className="absolute top-2 right-2">
@@ -107,8 +107,8 @@ export function SignUpForm() {
                       />
                     </div>
                     <div className="text-center">
-                      <p className="font-medium text-sm">{role.label}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-medium text-sm font-sans">{role.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {role.description}
                       </p>
                     </div>
@@ -158,16 +158,16 @@ export function SignUpForm() {
             </div>
             <Button
               type="submit"
-              className="w-full mt-2"
+              className="w-full mt-2 bg-primary text-primary-foreground hover:bg-primary/95"
               disabled={!selectedRole || isLoading}>
-              {isLoading ? "Creating account..." : "Create an account"}
+              {isLoading ? "Creating account…" : "Create an account"}
             </Button>
             <SignInWithGoogleButton />
           </div>
         </form>
         <div className="mt-6 text-center text-sm">
           Already have an account?{" "}
-          <Link href="/login" className="underline">
+          <Link href="/signin" className="underline hover:text-primary transition-colors">
             Sign in
           </Link>
         </div>

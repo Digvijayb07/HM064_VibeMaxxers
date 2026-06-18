@@ -109,18 +109,18 @@ function ApplicationsContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
+      <header className="sticky top-0 z-50 backdrop-blur bg-card/70 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground font-bold flex items-center justify-center">
               T
             </div>
             <span className="font-bold text-lg">TalentHub</span>
@@ -138,7 +138,9 @@ function ApplicationsContent() {
 
       <main className="max-w-7xl mx-auto px-4 py-10 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">All Applications</h1>
+          <h1 className="text-3xl font-bold font-sans tracking-tight">
+            All <span className="font-serif italic text-primary/80">Applications</span>
+          </h1>
           <p className="text-muted-foreground mt-1">
             Review freelancers who applied to your projects
           </p>
@@ -154,13 +156,13 @@ function ApplicationsContent() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Badge className="bg-indigo-500/20 text-indigo-700">
+          <Badge className="bg-primary/10 text-primary border border-primary/20 font-mono">
             Total Applications: {applications.length}
           </Badge>
         </div>
 
         {filteredApplications.length === 0 ? (
-          <Card className="p-12 text-center text-muted-foreground">
+          <Card className="p-12 text-center text-muted-foreground border border-border bg-card">
             No applications found
           </Card>
         ) : (
@@ -168,44 +170,44 @@ function ApplicationsContent() {
             {filteredApplications.map((app) => (
               <Card
                 key={app.id}
-                className="p-6 hover:shadow-xl transition border-l-4 border-indigo-500">
+                className="p-6 border border-border bg-card hover:border-primary/50 transition-colors card-telemetry">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <h3 className="text-lg font-bold">
+                      <h3 className="text-lg font-bold font-sans">
                         {app.users.name}
                       </h3>
-                      <Badge className="bg-blue-500/20 text-blue-700">
+                      <Badge className="bg-cyan-500/10 text-cyan-600 border border-cyan-500/20 dark:text-cyan-400 font-mono">
                         Applied
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {app.users.professional_title || "Freelancer"}
                     </p>
-                    <p className="text-sm text-indigo-600 mt-1">
+                    <p className="text-sm text-primary mt-1 font-sans">
                       Applied to: {app.projects.title}
                     </p>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 text-sm font-mono">
                       <div>
-                        <p className="text-muted-foreground flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 uppercase tracking-wider">
                           <DollarSign size={14} /> Hourly Rate
                         </p>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-base">
                           ${app.users.hr_rate || 0}/hr
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">Applied On</p>
-                        <p className="font-semibold">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">Applied On</p>
+                        <p className="font-semibold text-base">
                           {formatDate(app.created_at)}
                         </p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">
                           Project Budget
                         </p>
-                        <p className="font-semibold">
+                        <p className="font-semibold text-base">
                           ${app.projects.budget.toLocaleString()}
                         </p>
                       </div>
@@ -216,12 +218,13 @@ function ApplicationsContent() {
                         {app.users.skills.slice(0, 5).map((skill) => (
                           <Badge
                             key={skill}
-                            className="bg-indigo-500/15 text-indigo-700">
+                            variant="outline"
+                            className="bg-primary/5 text-primary border-primary/10 font-mono">
                             {skill}
                           </Badge>
                         ))}
                         {app.users.skills.length > 5 && (
-                          <Badge className="bg-gray-500/15 text-gray-700">
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border font-mono">
                             +{app.users.skills.length - 5} more
                           </Badge>
                         )}
@@ -233,7 +236,7 @@ function ApplicationsContent() {
                     <Link href={`/company/projects/${app.project_id}`}>
                       <Button variant="outline">View Project</Button>
                     </Link>
-                    <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                    <Button className="bg-primary text-primary-foreground hover:bg-primary/95">
                       Contact
                     </Button>
                   </div>

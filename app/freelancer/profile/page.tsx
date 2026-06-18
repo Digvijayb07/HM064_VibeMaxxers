@@ -118,14 +118,14 @@ export default function FreelancerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
       <div className="mx-auto max-w-4xl px-6 py-10 space-y-6">
         <div className="flex items-center justify-between">
           <Link href="/freelancer/dashboard">
@@ -143,11 +143,11 @@ export default function FreelancerProfilePage() {
         {!isEditing ? (
           <>
             {/* HEADER */}
-            <Card className="relative overflow-hidden border-0 shadow-lg">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-pink-500/15" />
+            <Card className="relative overflow-hidden border border-border bg-card card-telemetry">
+              <div className="absolute inset-0 bg-primary/5 bg-grid-pattern/3" />
               <CardContent className="relative p-8 flex justify-between items-start">
                 <div className="space-y-1">
-                  <h1 className="text-3xl font-bold tracking-tight">
+                  <h1 className="text-3xl font-bold font-sans tracking-tight">
                     {profile.name}
                   </h1>
                   <p className="text-muted-foreground">
@@ -155,11 +155,11 @@ export default function FreelancerProfilePage() {
                   </p>
 
                   <Badge
-                    className={`mt-3 ${profile.availability === "available"
-                        ? "bg-emerald-500/20 text-emerald-700"
+                    className={`mt-3 font-mono border ${profile.availability === "available"
+                        ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400"
                         : profile.availability === "available-limited"
-                          ? "bg-yellow-500/20 text-yellow-700"
-                          : "bg-red-500/20 text-red-700"
+                          ? "bg-yellow-500/10 text-yellow-600 border-yellow-500/20 dark:text-yellow-400"
+                          : "bg-red-500/10 text-red-600 border-red-500/20 dark:text-red-400"
                       }`}
                   >
                     {profile.availability.replace("-", " ")}
@@ -168,7 +168,7 @@ export default function FreelancerProfilePage() {
 
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                  className="bg-primary text-primary-foreground hover:bg-primary/95"
                   onClick={() => setIsEditing(true)}
                 >
                   <Pencil className="h-4 w-4 mr-2" />
@@ -178,9 +178,9 @@ export default function FreelancerProfilePage() {
             </Card>
 
             {/* ABOUT */}
-            <Card className="border-l-4 border-indigo-500 shadow-sm">
+            <Card className="border border-border bg-card hover:border-primary/30 transition-colors card-telemetry">
               <CardHeader className="pb-2">
-                <h2 className="font-semibold text-indigo-600">About</h2>
+                <h2 className="font-semibold text-primary uppercase tracking-wider text-xs font-mono">About</h2>
               </CardHeader>
               <CardContent>
                 <p className="text-sm leading-relaxed text-muted-foreground">
@@ -190,17 +190,17 @@ export default function FreelancerProfilePage() {
             </Card>
 
             {/* SKILLS */}
-            <Card>
+            <Card className="border border-border bg-card hover:border-primary/30 transition-colors card-telemetry">
               <CardHeader className="pb-2">
-                <h2 className="font-semibold text-indigo-600">Skills</h2>
+                <h2 className="font-semibold text-primary uppercase tracking-wider text-xs font-mono">Skills</h2>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
                 {profile.skills?.length ? (
                   profile.skills.map((skill: string) => (
                     <Badge
                       key={skill}
-                      className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 
-                                 text-indigo-700 hover:from-indigo-500/30 hover:to-purple-500/30 transition"
+                      variant="outline"
+                      className="bg-primary/5 text-primary border-primary/10 font-mono"
                     >
                       {skill}
                     </Badge>
@@ -215,16 +215,16 @@ export default function FreelancerProfilePage() {
           </>
         ) : (
           /* EDIT MODE */
-          <Card className="border border-indigo-500/30 shadow-lg shadow-indigo-500/10">
+          <Card className="border border-border bg-card card-telemetry">
             <CardContent className="p-8 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label>Full Name</Label>
-                  <Input name="name" value={formData.name} onChange={handleChange} />
+                  <Input name="name" value={formData.name} onChange={handleChange} className="mt-2" />
                 </div>
                 <div>
                   <Label>Professional Title</Label>
-                  <Input name="title" value={formData.title} onChange={handleChange} />
+                  <Input name="title" value={formData.title} onChange={handleChange} className="mt-2" />
                 </div>
               </div>
 
@@ -234,7 +234,7 @@ export default function FreelancerProfilePage() {
                   name="bio"
                   value={formData.bio}
                   onChange={handleChange}
-                  className="mt-2 w-full min-h-[120px] rounded-lg border bg-background p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="mt-2 w-full min-h-[120px] rounded-md border border-input bg-card p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 />
               </div>
 
@@ -255,7 +255,8 @@ export default function FreelancerProfilePage() {
                   {formData.skills.map((skill) => (
                     <Badge
                       key={skill}
-                      className="cursor-pointer bg-indigo-500/15 text-indigo-700 hover:bg-red-500/20 hover:text-red-700 transition"
+                      variant="outline"
+                      className="cursor-pointer bg-primary/10 text-primary border-primary/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-colors font-mono"
                       onClick={() => removeSkill(skill)}
                     >
                       {skill} ×
@@ -270,7 +271,7 @@ export default function FreelancerProfilePage() {
                 </Button>
                 <Button
                   onClick={handleSave}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white"
+                  className="bg-primary text-primary-foreground hover:bg-primary/95"
                 >
                   Save Changes
                 </Button>

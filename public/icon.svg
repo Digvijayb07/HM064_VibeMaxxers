@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <style>
+    .bg { fill: none; }
+    .primary { fill: #0e7490; transition: fill 0.3s; }
+    .secondary { stroke: #0891b2; fill: none; stroke-width: 16; stroke-linecap: round; stroke-linejoin: round; }
+    .brackets { stroke: #0e7490; fill: none; stroke-width: 20; stroke-linecap: round; }
+    .grid-lines { stroke: rgba(14, 116, 144, 0.15); stroke-width: 4; stroke-dasharray: 8 8; }
+    .accent { fill: #06b6d4; }
+    
+    @media (prefers-color-scheme: dark) {
+      .primary { fill: #00e5ff; }
+      .secondary { stroke: #00e5ff; }
+      .brackets { stroke: #00e5ff; }
+      .grid-lines { stroke: rgba(0, 229, 255, 0.15); }
+      .accent { fill: #00e5ff; }
+    }
+  </style>
+  <!-- Background -->
+  <rect width="512" height="512" class="bg" rx="128"/>
+  
+  <!-- Sleek tech background grid -->
+  <line x1="128" y1="64" x2="128" y2="448" class="grid-lines" />
+  <line x1="256" y1="64" x2="256" y2="448" class="grid-lines" />
+  <line x1="384" y1="64" x2="384" y2="448" class="grid-lines" />
+  <line x1="64" y1="128" x2="448" y2="128" class="grid-lines" />
+  <line x1="64" y1="256" x2="448" y2="256" class="grid-lines" />
+  <line x1="64" y1="384" x2="448" y2="384" class="grid-lines" />
+  
+  <!-- Outer telemetry/blueprint brackets -->
+  <!-- Top-left bracket -->
+  <path d="M 110,64 L 64,64 L 64,110" class="brackets" />
+  <!-- Bottom-right bracket -->
+  <path d="M 402,448 L 448,448 L 448,402" class="brackets" />
+  
+  <!-- T logo representation in high tech style -->
+  <!-- Main horizontal bar of the T with technical segments -->
+  <rect x="128" y="160" width="256" height="48" rx="8" class="primary" />
+  <!-- Vertical stem of the T -->
+  <rect x="232" y="208" width="48" height="176" rx="8" class="primary" />
+  
+  <!-- Tech details (glowing points/circles) -->
+  <!-- Top left accent dot -->
+  <circle cx="160" cy="184" r="12" class="accent" />
+  <!-- Center intersection dot -->
+  <circle cx="256" cy="184" r="14" fill="#ffffff" />
+  <!-- Bottom stem dot -->
+  <circle cx="256" cy="350" r="12" class="accent" />
+</svg>

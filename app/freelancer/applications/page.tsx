@@ -76,30 +76,30 @@ function ApplicationsContent() {
   const StatusBadge = ({ status }: { status: string }) => {
     if (status === "open")
       return (
-        <Badge className="bg-emerald-600 text-white flex items-center gap-1">
+        <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 dark:text-emerald-400 flex items-center gap-1 font-mono">
           <CheckCircle2 className="h-3 w-3" /> Open
         </Badge>
       );
     if (status === "closed")
-      return <Badge className="bg-slate-600 text-white">Closed</Badge>;
+      return <Badge className="bg-slate-500/10 text-slate-600 border border-slate-500/20 dark:text-slate-400 font-mono">Closed</Badge>;
 
     return (
-      <Badge className="bg-blue-600 text-white flex items-center gap-1">
+      <Badge className="bg-cyan-500/10 text-cyan-600 border border-cyan-500/20 dark:text-cyan-400 flex items-center gap-1 font-mono">
         <Clock className="h-3 w-3" /> Submitted
       </Badge>
     );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 bg-white border-b shadow-sm">
+      <header className="sticky top-0 z-50 backdrop-blur border-b border-border bg-card/70">
         <div className="mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground flex items-center justify-center font-bold">
               T
             </div>
-            <span className="text-xl font-bold">TalentHub</span>
+            <span className="text-lg font-bold">TalentHub</span>
           </div>
           <div className="flex gap-4">
             <Link href="/freelancer/dashboard">
@@ -115,7 +115,9 @@ function ApplicationsContent() {
       <div className="mx-auto max-w-5xl px-6 py-10">
         {/* TITLE */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">My Applications</h1>
+          <h1 className="text-3xl font-bold font-sans tracking-tight">
+            My <span className="font-serif italic text-primary/80">Applications</span>
+          </h1>
           <p className="text-muted-foreground mt-1">
             Track and manage your project applications
           </p>
@@ -125,28 +127,26 @@ function ApplicationsContent() {
         <div className="relative mb-6">
           <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
           <Input
-            placeholder="Search by project title..."
+            placeholder="Search by project title…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white border border-slate-300"
+            className="pl-10"
           />
         </div>
 
         {isLoading ? (
-          <Card className="p-12 text-center">Loading...</Card>
+          <Card className="p-12 text-center">Loading…</Card>
         ) : (
           <Tabs defaultValue="all">
             {/* TABS */}
-            <TabsList className="grid grid-cols-3 bg-white shadow-md rounded-xl p-1 mb-6">
+            <TabsList className="grid w-full grid-cols-3 mb-6 bg-muted/65 border border-border p-1 h-11">
               <TabsTrigger
                 value="all"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg"
               >
                 All ({applications.length})
               </TabsTrigger>
               <TabsTrigger
                 value="open"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg"
               >
                 Open (
                 {
@@ -157,7 +157,6 @@ function ApplicationsContent() {
               </TabsTrigger>
               <TabsTrigger
                 value="closed"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg"
               >
                 Closed (
                 {
@@ -174,27 +173,26 @@ function ApplicationsContent() {
                   filterApplications(tab === "all" ? null : tab).map((app) => (
                     <Card
                       key={app.id}
-                      className="p-6 bg-white border-l-4 border-primary shadow-md hover:shadow-xl transition"
+                      className="p-6 border border-border bg-card hover:border-primary/50 transition-colors card-telemetry"
                     >
                       <div className="flex justify-between gap-4">
                         <div>
-                          <h3 className="text-lg font-semibold">
+                          <h3 className="text-lg font-semibold font-sans">
                             {app.project?.title}
                           </h3>
                           <p className="text-sm text-muted-foreground">
                             Company Project
                           </p>
 
-                          <div className="flex gap-4 text-sm mt-3 text-muted-foreground">
+                          <div className="flex flex-wrap gap-4 text-sm mt-3 text-muted-foreground font-mono">
                             <span>
                               Applied:{" "}
                               {new Date(
                                 app.created_at
                               ).toLocaleDateString()}
                             </span>
-                            <span>
-                              Budget: $
-                              {app.project?.budget.toLocaleString()}
+                            <span className="text-primary font-semibold">
+                              Budget: ${app.project?.budget.toLocaleString()}
                             </span>
                             <span className="capitalize">
                               {app.project?.category}
@@ -209,7 +207,7 @@ function ApplicationsContent() {
                           <Link
                             href={`/freelancer/projects/${app.project_id}`}
                           >
-                            <Button className="bg-primary text-white hover:bg-primary/90">
+                            <Button className="bg-primary text-primary-foreground hover:bg-primary/95">
                               View Project
                             </Button>
                           </Link>
@@ -218,7 +216,7 @@ function ApplicationsContent() {
                     </Card>
                   ))
                 ) : (
-                  <Card className="p-12 text-center text-muted-foreground">
+                  <Card className="p-12 text-center text-muted-foreground border border-border bg-card">
                     No applications found
                   </Card>
                 )}

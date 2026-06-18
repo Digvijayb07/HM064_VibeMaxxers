@@ -81,16 +81,16 @@ export default function CreateProjectPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
+      <header className="sticky top-0 z-50 backdrop-blur bg-card/70 border-b border-border">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
           <Link
             href="/company/dashboard"
-            className="p-2 rounded-lg hover:bg-indigo-50 transition">
+            className="p-2 rounded-lg hover:bg-primary/10 transition-colors">
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </Link>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground font-bold flex items-center justify-center">
               T
             </div>
             <span className="font-bold text-lg">TalentHub</span>
@@ -99,8 +99,10 @@ export default function CreateProjectPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-10">
-        <Card className="p-8 shadow-xl border-0">
-          <h1 className="text-3xl font-bold mb-2">Post a New Project</h1>
+        <Card className="p-8 border border-border bg-card card-telemetry">
+          <h1 className="text-3xl font-bold font-sans tracking-tight mb-2">
+            Post a <span className="font-serif italic text-primary/80">New Project</span>
+          </h1>
           <p className="text-muted-foreground mb-6">
             Describe your project clearly to attract the best freelancers
           </p>
@@ -124,14 +126,14 @@ export default function CreateProjectPage() {
               />
             </div>
 
-            <div>
+             <div>
               <Label className="font-semibold">Project Description</Label>
               <textarea
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows={6}
-                className="mt-2 w-full rounded-lg border bg-background p-3 text-sm focus:ring-2 focus:ring-indigo-500"
+                className="mt-2 w-full rounded-md border border-input bg-card p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                 required
               />
             </div>
@@ -142,7 +144,7 @@ export default function CreateProjectPage() {
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
-                className="mt-2 w-full rounded-lg border bg-background p-2 focus:ring-2 focus:ring-indigo-500">
+                className="mt-2 w-full rounded-md border border-input bg-card p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
                 <option value="web">Web Development</option>
                 <option value="mobile">Mobile Development</option>
                 <option value="design">Design</option>
@@ -180,7 +182,7 @@ export default function CreateProjectPage() {
                   name="level"
                   value={formData.level}
                   onChange={handleChange}
-                  className="mt-2 w-full rounded-lg border bg-background p-2 focus:ring-2 focus:ring-indigo-500">
+                  className="mt-2 w-full rounded-md border border-input bg-card p-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]">
                   <option value="beginner">Beginner</option>
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
@@ -224,7 +226,8 @@ export default function CreateProjectPage() {
                   {formData.skills.map((skill) => (
                     <Badge
                       key={skill}
-                      className="bg-indigo-500/15 text-indigo-700 cursor-pointer hover:bg-red-500/20 hover:text-red-700"
+                      variant="outline"
+                      className="cursor-pointer bg-primary/10 text-primary border-primary/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20 transition-colors font-mono"
                       onClick={() => removeSkill(skill)}>
                       {skill} ×
                     </Badge>
@@ -243,7 +246,7 @@ export default function CreateProjectPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/95">
                 {isSubmitting ? "Posting…" : "Post Project"}
               </Button>
               <Link href="/company/dashboard" className="flex-1">

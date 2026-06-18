@@ -54,13 +54,13 @@ export default function ProjectDetailPage({
     applicationStatuses[app.id] || app.status;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+      <header className="sticky top-0 z-50 backdrop-blur bg-card/70 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <Link
             href="/company/dashboard"
-            className="flex items-center gap-2 text-sm font-medium"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
@@ -70,20 +70,20 @@ export default function ProjectDetailPage({
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* PROJECT INFO */}
-        <Card className="p-6">
+        <Card className="p-6 border border-border bg-card card-telemetry">
           <div className="flex justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold">{project.title}</h1>
+              <h1 className="text-3xl font-bold font-sans tracking-tight">{project.title}</h1>
               <p className="text-muted-foreground mt-1">
                 {project.description}
               </p>
             </div>
-            <Badge className="bg-emerald-500/20 text-emerald-700 capitalize">
+            <Badge className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 dark:text-emerald-400 font-mono capitalize">
               {project.status}
             </Badge>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t pt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 border-t border-border pt-4">
             <Stat icon={DollarSign} label="Budget" value={`$${project.budget}`} />
             <Stat icon={Clock} label="Duration" value={project.duration} />
             <Stat icon={Users} label="Applicants" value={applications.length} />
@@ -92,8 +92,8 @@ export default function ProjectDetailPage({
         </Card>
 
         {/* APPLICATIONS */}
-        <Card className="p-6">
-          <h2 className="text-2xl font-bold mb-6">
+        <Card className="p-6 border border-border bg-card card-telemetry">
+          <h2 className="text-2xl font-bold mb-6 font-sans tracking-tight">
             Applications ({applications.length})
           </h2>
 
@@ -106,18 +106,18 @@ export default function ProjectDetailPage({
               {applications.map((app) => (
                 <div
                   key={app.id}
-                  className="p-6 border rounded-lg hover:shadow-md transition"
+                  className="p-6 border border-border bg-card rounded-lg hover:border-primary/50 transition-colors card-telemetry"
                 >
                   <div className="flex justify-between mb-3">
                     <div>
-                      <h4 className="font-semibold">
+                      <h4 className="font-semibold font-sans">
                         {app.freelancerName}
                       </h4>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground font-mono">
                         Applied on {app.submittedAt}
                       </p>
                     </div>
-                    <Badge className="capitalize">{getStatus(app)}</Badge>
+                    <Badge className="bg-cyan-500/10 text-cyan-600 border border-cyan-500/20 dark:text-cyan-400 font-mono capitalize">{getStatus(app)}</Badge>
                   </div>
 
                   <p className="mb-4">{app.coverLetter}</p>
@@ -145,7 +145,7 @@ export default function ProjectDetailPage({
                     </Button>
                     <Button
                       size="sm"
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                      className="bg-primary text-primary-foreground hover:bg-primary/95 shadow-sm"
                       onClick={() =>
                         updateStatus(app.id, "awarded")
                       }
@@ -175,11 +175,11 @@ function Stat({
 }) {
   return (
     <div>
-      <p className="text-xs text-muted-foreground flex items-center gap-1">
+      <p className="text-xs text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-mono">
         <Icon className="h-4 w-4" />
         {label}
       </p>
-      <p className="text-lg font-bold">{value}</p>
+      <p className="text-lg font-bold font-mono mt-0.5">{value}</p>
     </div>
   );
 }

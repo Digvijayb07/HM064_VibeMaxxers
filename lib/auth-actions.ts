@@ -113,8 +113,11 @@ export async function signup(formData: FormData) {
         : "/freelancer/complete-profile";
     redirect(redirectPath);
   } catch (error) {
+    if (error instanceof Error && (error as any).digest?.startsWith("NEXT_REDIRECT")) {
+      throw error;
+    }
     console.error("Signup error:", error);
-    redirect("/error");
+    redirect(`/error?error=${encodeURIComponent(error instanceof Error ? error.message : String(error))}`);
   }
 }
 
@@ -241,7 +244,7 @@ export async function signInWithGitHub() {
 
   if (error) {
     console.error("GitHub sign-in error:", error);
-    redirect("/auth/signin?error=Could not authenticate with GitHub");
+    redirect("/signin?error=Could not authenticate with GitHub");
   }
 
   if (data.url) {

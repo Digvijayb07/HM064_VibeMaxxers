@@ -82,19 +82,19 @@ function ProjectsContent() {
 
   const statusStyle = (status: string) => {
     if (status === "open")
-      return "bg-emerald-500/20 text-emerald-700";
+      return "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 dark:text-emerald-400 font-mono";
     if (status === "in-progress")
-      return "bg-blue-500/20 text-blue-700";
-    return "bg-gray-500/20 text-gray-700";
+      return "bg-blue-500/10 text-blue-600 border border-blue-500/20 dark:text-blue-400 font-mono";
+    return "bg-slate-500/10 text-slate-600 border border-slate-500/20 dark:text-slate-400 font-mono";
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-background bg-grid-pattern bg-blueprint-glow">
       {/* HEADER */}
-      <header className="sticky top-0 z-50 backdrop-blur bg-white/70 border-b">
+      <header className="sticky top-0 z-50 backdrop-blur bg-card/70 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md bg-primary text-primary-foreground font-bold flex items-center justify-center">
               T
             </div>
             <span className="font-bold text-lg">TalentHub</span>
@@ -115,13 +115,15 @@ function ProjectsContent() {
         {/* TITLE */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">My Projects</h1>
+            <h1 className="text-3xl font-bold font-sans tracking-tight">
+              My <span className="font-serif italic text-primary/80">Projects</span>
+            </h1>
             <p className="text-muted-foreground mt-1">
               Manage and track all your posted projects
             </p>
           </div>
           <Link href="/company/create-project">
-            <Button className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/95">
               <Plus className="h-4 w-4 mr-2" />
               Post Project
             </Button>
@@ -129,13 +131,13 @@ function ProjectsContent() {
         </div>
 
         {/* SEARCH + FILTERS */}
-        <Card className="p-6 bg-white/80 backdrop-blur">
+        <Card className="p-6 border border-border bg-card/80 backdrop-blur card-telemetry">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
                 className="pl-10"
-                placeholder="Search projects..."
+                placeholder="Search projects…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -144,7 +146,7 @@ function ProjectsContent() {
             <div className="flex gap-2 flex-wrap">
               <Button
                 size="sm"
-                className={!selectedStatus ? "bg-indigo-500 text-white" : ""}
+                className={!selectedStatus ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm" : ""}
                 variant={!selectedStatus ? "default" : "outline"}
                 onClick={() => setSelectedStatus(null)}
               >
@@ -157,7 +159,7 @@ function ProjectsContent() {
                   size="sm"
                   className={
                     selectedStatus === status
-                      ? "bg-indigo-500 text-white"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
                       : ""
                   }
                   variant={
@@ -174,16 +176,16 @@ function ProjectsContent() {
 
         {/* LIST */}
         {isLoading ? (
-          <Card className="p-12 text-center text-muted-foreground">
+          <Card className="p-12 text-center text-muted-foreground border border-border bg-card">
             Loading projects…
           </Card>
         ) : filteredProjects.length === 0 ? (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center border border-border bg-card">
             <p className="text-muted-foreground mb-4">
               No projects found
             </p>
             <Link href="/company/create-project">
-              <Button>Post Your First Project</Button>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/95">Post Your First Project</Button>
             </Link>
           </Card>
         ) : (
@@ -193,10 +195,10 @@ function ProjectsContent() {
                 key={project.id}
                 href={`/company/projects/${project.id}`}
               >
-                <Card className="p-6 hover:shadow-xl transition border-l-4 border-indigo-500 bg-white cursor-pointer">
+                <Card className="p-6 hover:border-primary/50 transition-colors border border-border bg-card cursor-pointer card-telemetry">
                   <div className="flex justify-between gap-4">
                     <div>
-                      <h3 className="font-semibold text-lg">
+                      <h3 className="font-semibold text-lg font-sans">
                         {project.title}
                       </h3>
                       <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
@@ -209,26 +211,26 @@ function ProjectsContent() {
                     </Badge>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-border text-sm font-mono">
                     <div>
-                      <p className="text-muted-foreground">Budget</p>
-                      <p className="font-semibold">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Budget</p>
+                      <p className="font-semibold text-base">
                         ${project.budget.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Applications</p>
-                      <p className="font-semibold">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Applications</p>
+                      <p className="font-semibold text-base">
                         {project.applicantCount}
                       </p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Duration</p>
-                      <p className="font-semibold">{project.duration}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Duration</p>
+                      <p className="font-semibold text-base">{project.duration}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Deadline</p>
-                      <p className="font-semibold">{project.deadline}</p>
+                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Deadline</p>
+                      <p className="font-semibold text-base">{project.deadline}</p>
                     </div>
                   </div>
 

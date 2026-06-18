@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-18T22:38:00Z",
+  "title": "Design System: TalentHub",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Telemetry Cyan", "canonical": "oklch(48.5% 0.145 220)" },
+      "primary-dark": { "role": "primary", "displayName": "Electric Cyan", "canonical": "oklch(82.6% 0.198 195)" },
+      "neutral-bg": { "role": "neutral", "displayName": "Blueprint Light Canvas", "canonical": "oklch(97.5% 0.005 210)" },
+      "neutral-bg-dark": { "role": "neutral", "displayName": "HUD Dark Canvas", "canonical": "oklch(14.8% 0.015 240)" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Outfit", "purpose": "Hero and major section headers only." },
+      "body": { "displayName": "Body Outfit", "purpose": "Default paragraphs and descriptions." },
+      "mono": { "displayName": "Label Monospace", "purpose": "Technical metadata and table values." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "ease-exit", "value": "150ms ease-in", "purpose": "Outgoing view transitions." },
+      { "name": "ease-enter", "value": "210ms ease-out", "purpose": "Incoming view transitions." },
+      { "name": "ease-move", "value": "400ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Shared element morphs." }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Standard call-to-action button with micro-interactive states.",
+      "html": "<button class=\"ds-btn-primary\">Apply Now</button>",
+      "css": ".ds-btn-primary { background-color: #0e7490; color: #ffffff; padding: 8px 16px; font-size: 14px; font-weight: 500; font-family: Outfit, sans-serif; border: none; border-radius: 6px; cursor: pointer; transition: background-color 150ms ease-out; } .ds-btn-primary:hover { background-color: #0891b2; }"
+    },
+    {
+      "name": "Telemetry Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Information block container with corner telemetry brackets.",
+      "html": "<div class=\"ds-card\"><h4 class=\"ds-card-title\">Project Card</h4><p class=\"ds-card-desc\">Technical details list.</p></div>",
+      "css": ".ds-card { background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; font-family: Outfit, sans-serif; position: relative; } .ds-card-title { margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #0f172a; } .ds-card-desc { margin: 0; font-size: 14px; color: #475569; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Telemetry Blueprint",
+    "overview": "TalentHub is styled as a high-precision developer console and blueprint drawing. It leverages glowing cyan grids, clean hairline geometric borders, and technical monospace labels to provide developers and companies with a tactile, professional workspace.",
+    "keyCharacteristics": [
+      "Glowing blueprint grid lines and technical scrollbars.",
+      "Monospace indices and custom telemetry brackets that highlight on hover.",
+      "Flat container sheets with zero drop-shadow footprint.",
+      "Clean editorial contrast pairing Outfit sans-serif with Lora serif italic accents."
+    ],
+    "rules": [
+      { "name": "The Rarity Rule", "body": "The Telemetry Cyan accent is used on <=10% of any given screen. Its rarity is what gives it its high-contrast, glowing focus.", "section": "colors" },
+      { "name": "The Flat-HUD Rule", "body": "Surfaces are completely flat at rest. Depth is represented by borders and subtle tinting changes. Drop shadows are strictly forbidden on borders.", "section": "elevation" },
+      { "name": "The Editorial Accent Rule", "body": "Lora serif is used exclusively in its italic style as a single-word or short-phrase accent within sans-serif Display headings to add warmth and human craft.", "section": "typography" }
+    ],
+    "dos": [
+      "Do wrap project titles in <ViewTransition> to preserve typographic continuity.",
+      "Do align data tables and badges using the strict monospaced JetBrains Mono layout.",
+      "Do use single-character typography ellipses (\u2026) instead of three dot strings."
+    ],
+    "donts": [
+      "Don't use warm cream/sand background colors under any circumstances.",
+      "Don't use drop-shadows combined with border strokes on buttons or cards.",
+      "Don't use text gradients (background-clip: text style text color fills).",
+      "Don't use card corner border-radii larger than 12px."
+    ]
+  }
+}
